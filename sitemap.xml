@@ -3,6 +3,11 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://shellfly.org/posts/why-does-python-have-a-gil/</loc>
+    <lastmod>2018-03-19T17:14:00+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://shellfly.org/posts/my-first-post/</loc>
     <lastmod>2018-01-28T22:20:10+08:00</lastmod>
   </url>
@@ -14,7 +19,7 @@
   
   <url>
     <loc>https://shellfly.org/posts/</loc>
-    <lastmod>2018-01-28T22:20:10+08:00</lastmod>
+    <lastmod>2018-03-19T17:14:00+08:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -25,7 +30,7 @@
   
   <url>
     <loc>https://shellfly.org/</loc>
-    <lastmod>2018-01-28T22:20:10+08:00</lastmod>
+    <lastmod>2018-03-19T17:14:00+08:00</lastmod>
     <priority>0</priority>
   </url>
   
