@@ -1,6 +1,6 @@
 # Site settings
 baseurl = "https://shellfly.org/"
-languageCode = "en-us"
+languageCode = "zh-CN"
 title = "shellfly's blog"
 theme = "hugo-cactus-theme"
 # Enter your tracking code to enable Google Analytics
