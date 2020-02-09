@@ -1,0 +1,4 @@
+[submodule "public"]
+	path = public
+	url = https://github.com/shellfly/shellfly.github.io.git
+	branch = master
