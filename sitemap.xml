@@ -1,6 +1,21 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <url>
+    <loc>https://shellfly.org/posts/</loc>
+    <lastmod>2020-02-09T21:20:50+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://shellfly.org/</loc>
+    <lastmod>2020-02-09T21:20:50+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://shellfly.org/posts/sorting-algorithms/</loc>
+    <lastmod>2020-02-09T21:20:50+08:00</lastmod>
+  </url>
   
   <url>
     <loc>https://shellfly.org/posts/why-does-python-have-a-gil/</loc>
@@ -14,24 +29,10 @@
   
   <url>
     <loc>https://shellfly.org/categories/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/</loc>
-    <lastmod>2018-03-19T17:14:00+08:00</lastmod>
-    <priority>0</priority>
   </url>
   
   <url>
     <loc>https://shellfly.org/tags/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/</loc>
-    <lastmod>2018-03-19T17:14:00+08:00</lastmod>
-    <priority>0</priority>
   </url>
   
 </urlset>

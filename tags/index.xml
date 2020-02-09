@@ -1,12 +1,11 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on shellfly&#39;s blog</title>
     <link>https://shellfly.org/tags/</link>
     <description>Recent content in Tags on shellfly&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    <copyright>若无特别声明，本网站作品采用&lt;a rel=&#34;license&#34; class=&#34;license&#34; href=&#34;http://creativecommons.org/licenses/by-nc-sa/4.0/&#34;&gt;知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议&lt;/a&gt;进行许可。</copyright>
+    <language>zh-CN</language>
     
 	<atom:link href="https://shellfly.org/tags/index.xml" rel="self" type="application/rss+xml" />
     
