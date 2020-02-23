@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en-us">
+	<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="shellfly">
+<meta name="description" content="shellfly&#39;s blog about something he likes">
+<meta name="generator" content="Hugo 0.63.1" />
+<title>B-tree and database index</title>
+<link rel="stylesheet" href="https://shellfly.org/css/share.min.css">
+<link rel="shortcut icon" href="https://shellfly.org/images/favicon.ico">
+<link rel="stylesheet" href="https://shellfly.org/css/style.css">
+<link rel="stylesheet" href="https://shellfly.org/css/highlight.css">
+
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+
+
+
+<link href="https://shellfly.org/index.xml" rel="alternate" type="application/rss+xml" title="shellfly&#39;s blog" />
+
+
+<meta property="og:title" content="B-tree and database index" />
+<meta property="og:description" content="I know database index was implemented by B-tree for a long time, but actually I don’t understand how it works in detail and what stored in the tree node. Recently, I reread the book Algorithms, 4th Edition and there is a B-Tree implementation in the last chapter as an extend topic. I start to understand a bit after read the book, and then I did some search in Youtube and found an excellent tutorial which explains the B-tree and index very well." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shellfly.org/en/posts/b-tree-and-database-index/" />
+<meta property="article:published_time" content="2020-02-22T15:14:45+08:00" />
+<meta property="article:modified_time" content="2020-02-22T15:14:45+08:00" />
+
+
+<meta itemprop="name" content="B-tree and database index">
+<meta itemprop="description" content="I know database index was implemented by B-tree for a long time, but actually I don’t understand how it works in detail and what stored in the tree node. Recently, I reread the book Algorithms, 4th Edition and there is a B-Tree implementation in the last chapter as an extend topic. I start to understand a bit after read the book, and then I did some search in Youtube and found an excellent tutorial which explains the B-tree and index very well.">
+<meta itemprop="datePublished" content="2020-02-22T15:14:45&#43;08:00" />
+<meta itemprop="dateModified" content="2020-02-22T15:14:45&#43;08:00" />
+<meta itemprop="wordCount" content="959">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="B-tree and database index"/>
+<meta name="twitter:description" content="I know database index was implemented by B-tree for a long time, but actually I don’t understand how it works in detail and what stored in the tree node. Recently, I reread the book Algorithms, 4th Edition and there is a B-Tree implementation in the last chapter as an extend topic. I start to understand a bit after read the book, and then I did some search in Youtube and found an excellent tutorial which explains the B-tree and index very well."/>
+<meta name="twitter:site" content="@https://www.twitter.com/shell0fly"/>
+
+
+    </head>
+<body>
+    <nav class="main-nav">
+	
+		<a href='https://shellfly.org/'> <span class="arrow">←</span>Home</a>
+	
+
+	
+ 		<a href='/about/'>About</a>
+  	
+ 		<a href='/en/'>En</a>
+  	
+
+	
+		<a class="cta" href="https://shellfly.org/index.xml">Subscribe</a>
+	
+</nav>
+
+    <section id="wrapper">
+        
+        
+<article class="post">
+    <header>
+        <h1>B-tree and database index</h1>
+        <h2 class="subtitle"></h2>
+        <h2 class="headline">
+        February 22, 2020
+        <br>
+        
+        </h2>
+    </header>
+    <section id="post-body">
+        <p>I know database index was implemented by B-tree for a long time, but actually I don’t understand how it works in detail and what stored in the tree node. Recently, I reread the book <em>Algorithms, 4th Edition</em> and there is a B-Tree implementation in the last chapter as an extend topic. I start to understand a bit after read the book, and then I did some search in Youtube and found an <em>excellent tutorial</em> which explains the B-tree and index very well. I’m writing this help myself understand the topic by reorganized the content in the video, and I highly recommend everyone who is interested in this topic to have a watch as well（link will be provided below）.</p>
+<p>There are four parts in this post:</p>
+<ol>
+<li>Latency of disk access</li>
+<li>Index structure</li>
+<li>B-tree</li>
+<li>Difference of index in MySQL and PostgreSQL</li>
+</ol>
+<h2 id="lagency-of-disk-access">Lagency of disk access</h2>
+<p>Disk access is far slower compare to main memory. Assume that we don&rsquo;t have index, the data stored in the disk is just the tables(usually database stores one table in one file). When want to access one of some of the records, the whole file has to be read from disk because we don&rsquo;t know the address of the subset data we want in advance. and you can image that how it costs if we just want to update one row in a table. Even though SSD is common today, it still takes 0.25 to 1ms latency to access it, and the best speed is around 500MB/s to 1GB/s</p>
+<p>So we need to a mechanism to get the exactly address pointer of the data, which is sector in HDD or page in SDD, so that we can minimize disk access, and that is index&rsquo;s job.</p>
+<h2 id="index-structure">Index structure</h2>
+<p>As a developer, you must already have a high level understand of the index concept, it&rsquo;s kind like the book index, you can know the exact page number of the content you are interested in. It also called page in database, but it&rsquo;s the page of data.</p>
+<p>Index is constructed like a tree, so we can start from the simplest form(Binary Search Tree) first, and then see how to improve it for index.
+Binary search tree is a tree that every node has two children, and the key is greater or equal to left and less then right. the time to access any data in the tree is <strong>logarithmic time</strong> with factor of two in ideal case.</p>
+<p>There are two things need to be optimized if we want to use a tree for index, one is the <strong>tree height</strong>, as mentioned above, we want to minimize disk seek times, we can do this by change a binary search tree to a M-way search tree which means every node can have at most M-1 keys. And another thing is we have to maintain the <strong>tree balance</strong> so that every node has at least M/2 keys and all leaf nodes are in the same level.</p>
+<h2 id="b-tree">B-tree</h2>
+<p>B-tree implements two features mentioned above and is used for index in RDMS. Index itself is a kind of data in database which also need to be persisted in disk, and of course it&rsquo;s also splited to pages. PostgreSQL uses 8 kB page size for table and index while MySQL use 16 kB page size. Depends on server disk block size setting which may need one or two times to read one page. To minimize disk access, database usually use one page as a tree node.</p>
+<p>There is also a variant of B-tree called B+tree, the difference is that the internal node in B+tree doesn&rsquo;t store key-value pairs but all keys so that in the limit of page size, the internal node can hold more keys. All internal node will be duplicated in leaf nodes and data only stored in leaf nodes. the leaf nodes are also maintained in a linked list for fast traversal.</p>
+<p>Both MySQL and PostgreSQL use this variant, although PostgreSQL doesn&rsquo;t called it B+tree, because they regard B+tree as store data in the tree but they don&rsquo;t store table data in a tree directly like InnoDB does.</p>
+<h2 id="difference-of-index-in-mysql-and-postgresql">Difference of index in MySQL and PostgreSQL</h2>
+<p>MySQL has a special index called <strong>clustered index</strong> which is used for primary key, table data is organized in disk based on the value of primary key. And other index are called secondary index, the value in secondary index is primary key.</p>
+<p>With clustered index, it&rsquo;s very fast to retrive data by primary key because there is only a single I/O operation. And this is very often when you order by auto incremented ID or joined other table by foreign key.</p>
+<p>And the downside of clustered index is that it requires twice tree nodes traversal when using secondary index, first scan over secondary index to get the primary key and then walk though clustered index to get data.</p>
+<p>PostgreSQL split table and index, table is stored in regulary table structure called heap. the value in index is the row postion in disk. you don&rsquo;t get better performance by using primary key and you don&rsquo;t pay extra to use seconday key either.</p>
+<p>Another benefit to use clustered index is that when you update/datele a record in table, to support MVCC, there will be different versions of data exists at the same time. if you don&rsquo;t have clustered index, you have to update every index to pointer to the correct positions. Although PostgreSQL has the HOT feature which eliminates redundant index entries, it has the limits that the new tuple has to be stored on the same page and the update doesn&rsquo;t update an index column. This is also the main reason why Uber migrated from PostgreSQL to MySQL.</p>
+<p>Reference</p>
+<h6 id="httpsgithubcomkevin-waynealgs4"><a href="https://github.com/kevin-wayne/algs4">https://github.com/kevin-wayne/algs4</a></h6>
+<h6 id="httpswwwyoutubecomwatchvazjyr87r1b8"><a href="https://www.youtube.com/watch?v=aZjYr87r1b8">https://www.youtube.com/watch?v=aZjYr87r1b8</a></h6>
+<h6 id="httpcodecapsulecom20140212coding-for-ssds-part-2-architecture-of-an-ssd-and-benchmarking"><a href="http://codecapsule.com/2014/02/12/coding-for-ssds-part-2-architecture-of-an-ssd-and-benchmarking/">http://codecapsule.com/2014/02/12/coding-for-ssds-part-2-architecture-of-an-ssd-and-benchmarking/</a></h6>
+<h6 id="httpsuse-the-index-lukecomsqlanatomy"><a href="https://use-the-index-luke.com/sql/anatomy">https://use-the-index-luke.com/sql/anatomy</a></h6>
+<h6 id="httpswwwpostgresqlorgdocs12storage-page-layouthtml"><a href="https://www.postgresql.org/docs/12/storage-page-layout.html">https://www.postgresql.org/docs/12/storage-page-layout.html</a></h6>
+<h6 id="httpsdevmysqlcomdocrefman80eninnodb-physical-structurehtml"><a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-physical-structure.html">https://dev.mysql.com/doc/refman/8.0/en/innodb-physical-structure.html</a></h6>
+<h6 id="httpsenwikipediaorgwikitalk3ab2b_treepostgresqls_use_of_b_trees"><a href="https://en.wikipedia.org/wiki/Talk%3AB%2B_tree#PostgreSQL's_use_of_B+_trees">https://en.wikipedia.org/wiki/Talk%3AB%2B_tree#PostgreSQL's_use_of_B+_trees</a></h6>
+<h6 id="httpsgithubcompostgrespostgresblobmastersrcbackendaccessheapreadmehot"><a href="https://github.com/postgres/postgres/blob/master/src/backend/access/heap/README.HOT">https://github.com/postgres/postgres/blob/master/src/backend/access/heap/README.HOT</a></h6>
+<h6 id="httpsengubercommysql-migration"><a href="https://eng.uber.com/mysql-migration/">https://eng.uber.com/mysql-migration/</a></h6>
+
+    </section>
+</article>
+
+<footer id="post-meta" class="clearfix">
+    <a href="/">
+    <img class="avatar" src="https://shellfly.org/images/avatar.png">
+    <div>
+        <span class="dark">shellfly</span>
+        <span>翼をください</span>
+    </div>
+    </a>
+    <div class="social-share" data-sites="twitter,weibo" style="float:right" data-twitter-origin="shell0fly" data-weibo-origin="shellfly"></div>
+<script src="https://shellfly.org/js/social-share.min.js"></script>
+
+</footer>
+
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "shellfly" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+
+    
+    
+    
+        <li>
+            <a href="/en/posts/why-python-has-gil/">Why Python has a GIL<aside class="dates">Mar 19 2018</aside></a>
+        </li>
+    
+</ul>
+
+
+
+        <footer id="footer">
+    
+        <div id="social">
+
+	
+	
+    <a class="symbol" href="https://www.github.com/shellfly">
+        <i class="fa fa-github"></i>
+    </a>
+    
+    <a class="symbol" href="https://www.twitter.com/shell0fly">
+        <i class="fa fa-twitter"></i>
+    </a>
+    
+
+
+</div>
+
+    
+    <p class="small license">
+    
+        若无特别声明，本网站作品采用<!-- raw HTML omitted -->知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议<!-- raw HTML omitted -->进行许可。
+    
+    </p>
+</footer>
+
+    </section>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://shellfly.org/js/main.js"></script>
+<script src="https://shellfly.org/js/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-28584868-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+
+</body>
+</html>

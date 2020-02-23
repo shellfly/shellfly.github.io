@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en-us">
+	<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="shellfly">
+<meta name="description" content="shellfly&#39;s blog about something he likes">
+<meta name="generator" content="Hugo 0.63.1" />
+<title>Why Python has a GIL</title>
+<link rel="stylesheet" href="https://shellfly.org/css/share.min.css">
+<link rel="shortcut icon" href="https://shellfly.org/images/favicon.ico">
+<link rel="stylesheet" href="https://shellfly.org/css/style.css">
+<link rel="stylesheet" href="https://shellfly.org/css/highlight.css">
+
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+
+
+
+<link href="https://shellfly.org/index.xml" rel="alternate" type="application/rss+xml" title="shellfly&#39;s blog" />
+
+
+<meta property="og:title" content="Why Python has a GIL" />
+<meta property="og:description" content="GIL GIL is an acronym of Global Interpreter Lock, which is used by CPython to guarantee that there is only one thread executes bytecode at once. Because the exist of GIL, multi threads program would execute serially rather then concurrent even if the OS schedules different threads to different CPU cores. Therefore, the efficiency of multi threads program will reduce significantly. So, why does Python have a GIL? There is a short explain in Python official document:" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shellfly.org/en/posts/why-python-has-gil/" />
+<meta property="article:published_time" content="2018-03-19T17:14:00+08:00" />
+<meta property="article:modified_time" content="2018-03-19T17:14:00+08:00" />
+
+
+<meta itemprop="name" content="Why Python has a GIL">
+<meta itemprop="description" content="GIL GIL is an acronym of Global Interpreter Lock, which is used by CPython to guarantee that there is only one thread executes bytecode at once. Because the exist of GIL, multi threads program would execute serially rather then concurrent even if the OS schedules different threads to different CPU cores. Therefore, the efficiency of multi threads program will reduce significantly. So, why does Python have a GIL? There is a short explain in Python official document:">
+<meta itemprop="datePublished" content="2018-03-19T17:14:00&#43;08:00" />
+<meta itemprop="dateModified" content="2018-03-19T17:14:00&#43;08:00" />
+<meta itemprop="wordCount" content="372">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Why Python has a GIL"/>
+<meta name="twitter:description" content="GIL GIL is an acronym of Global Interpreter Lock, which is used by CPython to guarantee that there is only one thread executes bytecode at once. Because the exist of GIL, multi threads program would execute serially rather then concurrent even if the OS schedules different threads to different CPU cores. Therefore, the efficiency of multi threads program will reduce significantly. So, why does Python have a GIL? There is a short explain in Python official document:"/>
+<meta name="twitter:site" content="@https://www.twitter.com/shell0fly"/>
+
+
+    </head>
+<body>
+    <nav class="main-nav">
+	
+		<a href='https://shellfly.org/'> <span class="arrow">←</span>Home</a>
+	
+
+	
+ 		<a href='/about/'>About</a>
+  	
+ 		<a href='/en/'>En</a>
+  	
+
+	
+		<a class="cta" href="https://shellfly.org/index.xml">Subscribe</a>
+	
+</nav>
+
+    <section id="wrapper">
+        
+        
+<article class="post">
+    <header>
+        <h1>Why Python has a GIL</h1>
+        <h2 class="subtitle"></h2>
+        <h2 class="headline">
+        March 19, 2018
+        <br>
+        
+        </h2>
+    </header>
+    <section id="post-body">
+        <h2 id="gil">GIL</h2>
+<p>GIL is an acronym of Global Interpreter Lock, which is used by CPython to guarantee that there is only one thread executes bytecode at once.
+Because the exist of GIL, multi threads program would execute serially rather then concurrent even if the OS schedules different threads to different CPU cores. Therefore, the efficiency of multi threads program will reduce significantly.
+So, why does Python have a GIL?
+There is a short explain in Python official document:</p>
+<blockquote>
+<p>Python interpreter is not fully thread-safe. In order to support multi-threaded Python programs, there’s a global lock, called the global interpreter lock or GIL.</p>
+</blockquote>
+<h2 id="thread-safe">Thread Safe</h2>
+<p>If you write a multi threads program using C or Java, you have to use lock to protect share resources between threads. CPython is a interpreter implemented by C, it also need lock mechanism to keep code right, and GIL is a super big lock. Whenever a thread starts to execute, it has to acquire the GIL, and other threads will remain waiting while there is a running thread. Other system like JVM uses fine-grained lock to guarantee thread safe.</p>
+<p>There are two common operations will lead to the release of GIL. One is cooperative, a thread will release GIL before it doing I/O operations. Another one is preemptive, a thread has to release a GIL after a certain period of time.
+GIL in python doesn’t mean you don’t have to care about thread safe when you are writing Python code. The GIL protects the Python interpreter internals, but if you have some logic depend on serial code execution, you still have to add a lock to guarantee the right of you code.</p>
+<h2 id="why-gil">Why GIL</h2>
+<p>The most important reason for having a GIL is that it makes a single thread program very fast. There are no extra acquiring or releasing operations compared with fine-grained locks.
+It also makes it easy to integrate a C library. If a library is not thread safe, you just have to acquire GIL before calling it.</p>
+<p>PS:
+The human brain also has a GIL like a Python interpreter, it can only process one thing at a time. So, don’t watch your phone while driving a car, you should remember this after learning some Python.</p>
+
+    </section>
+</article>
+
+<footer id="post-meta" class="clearfix">
+    <a href="/">
+    <img class="avatar" src="https://shellfly.org/images/avatar.png">
+    <div>
+        <span class="dark">shellfly</span>
+        <span>翼をください</span>
+    </div>
+    </a>
+    <div class="social-share" data-sites="twitter,weibo" style="float:right" data-twitter-origin="shell0fly" data-weibo-origin="shellfly"></div>
+<script src="https://shellfly.org/js/social-share.min.js"></script>
+
+</footer>
+
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "shellfly" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+
+    
+    
+    
+        <li>
+            <a href="/en/posts/b-tree-and-database-index/">B-tree and database index<aside class="dates">Feb 22 2020</aside></a>
+        </li>
+    
+</ul>
+
+
+
+        <footer id="footer">
+    
+        <div id="social">
+
+	
+	
+    <a class="symbol" href="https://www.github.com/shellfly">
+        <i class="fa fa-github"></i>
+    </a>
+    
+    <a class="symbol" href="https://www.twitter.com/shell0fly">
+        <i class="fa fa-twitter"></i>
+    </a>
+    
+
+
+</div>
+
+    
+    <p class="small license">
+    
+        若无特别声明，本网站作品采用<!-- raw HTML omitted -->知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议<!-- raw HTML omitted -->进行许可。
+    
+    </p>
+</footer>
+
+    </section>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://shellfly.org/js/main.js"></script>
+<script src="https://shellfly.org/js/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-28584868-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+
+</body>
+</html>

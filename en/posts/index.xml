@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on shellfly&#39;s blog</title>
+    <link>https://shellfly.org/en/posts/</link>
+    <description>Recent content in Posts on shellfly&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 22 Feb 2020 15:14:45 +0800</lastBuildDate>
+    
+	<atom:link href="https://shellfly.org/en/posts/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>B-tree and database index</title>
+      <link>https://shellfly.org/en/posts/b-tree-and-database-index/</link>
+      <pubDate>Sat, 22 Feb 2020 15:14:45 +0800</pubDate>
+      
+      <guid>https://shellfly.org/en/posts/b-tree-and-database-index/</guid>
+      <description>I know database index was implemented by B-tree for a long time, but actually I don’t understand how it works in detail and what stored in the tree node. Recently, I reread the book Algorithms, 4th Edition and there is a B-Tree implementation in the last chapter as an extend topic. I start to understand a bit after read the book, and then I did some search in Youtube and found an excellent tutorial which explains the B-tree and index very well.</description>
+    </item>
+    
+    <item>
+      <title>Why Python has a GIL</title>
+      <link>https://shellfly.org/en/posts/why-python-has-gil/</link>
+      <pubDate>Mon, 19 Mar 2018 17:14:00 +0800</pubDate>
+      
+      <guid>https://shellfly.org/en/posts/why-python-has-gil/</guid>
+      <description>GIL GIL is an acronym of Global Interpreter Lock, which is used by CPython to guarantee that there is only one thread executes bytecode at once. Because the exist of GIL, multi threads program would execute serially rather then concurrent even if the OS schedules different threads to different CPU cores. Therefore, the efficiency of multi threads program will reduce significantly. So, why does Python have a GIL? There is a short explain in Python official document:</description>
+    </item>
+    
+  </channel>
+</rss>
