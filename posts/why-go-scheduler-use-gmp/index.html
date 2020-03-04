@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+	<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="shellfly">
+<meta name="description" content="shellfly&#39;s blog about something he likes">
+<meta name="generator" content="Hugo 0.63.1" />
+<title>为什么Go的调度模型是GMP，而不是GM</title>
+<link rel="stylesheet" href="https://shellfly.org/css/share.min.css">
+<link rel="shortcut icon" href="https://shellfly.org/images/favicon.ico">
+<link rel="stylesheet" href="https://shellfly.org/css/style.css">
+<link rel="stylesheet" href="https://shellfly.org/css/highlight.css">
+
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+
+
+
+<link href="https://shellfly.org/index.xml" rel="alternate" type="application/rss+xml" title="shellfly&#39;s blog" />
+
+
+<meta property="og:title" content="为什么Go的调度模型是GMP，而不是GM" />
+<meta property="og:description" content="最喜欢Go里面的一个功能就是goroutine，它提供了一个简单但是强大的语言级别的并发机制。虽然更喜欢写Python代码，不过说到并发，goroutine比Python里的yield和asyncio都好理解的多，而且性能理论上也好很多。
+为了管理goroutines，Go有自己的调度器。你可能已经知道Go的调度器使用G-M-P模型来调度goroutine。最近读一些关于Go的调度器怎么工作的文章时，一个问题开始浮现在脑子里面，为什么调度器需要一个P呢？为什么不直接就把goroutine（G）和系统的thread（M）做映射，那样不是更简单直接吗？
+继续阅读更多的文章后，我发现，在最开始Go 1.0发布的时候，调度器里确实是没有P的，就是用thread直接来调度goroutine，但是有一些性能上的问题，所以在Go 1.1的时候就引入了一种新的调度器，也就是从那时候起，调度器开始使用GMP模型。这是最开始的设计文档.
+文档里提到了在没有P的时候，调度器里的4个问题
+ 单一全局的mutex和state goroutine在不同的thread之间传递的开销 大量无用的M的内存缓存 因为系统调用产生的阻塞和解除阻塞  调度器需要用一个全局的mutex来管理和维护所有goroutine的调度状态，很难扩展。goroutine经常需要在不同的thread间传递，增加的额外的延时和开支。只有当前在运行的thread才需要内存缓存以及其他一些像堆栈的资源，被系统调用阻塞的thread其实并不需要。
+为了解决上面这些问题，Go运行时里引入了P（处理器），所以现在就有了M代表系统的thread，P代表执行Go代码需要的资源。P在M和G中间，它会获取下一个可执行的goroutine并且找到一个M来运行它。被系统调用阻塞的thread会释放P，这样P可以继续使用其他M或者创建一个新的M来处理其他goroutine。
+引入P后，调度器就有了分散的执行队列，用来执行goroutine的资源被限制在有限的P上面，因为系统调用产生的阻塞和解除阻塞也变的更高效。
+ref:
+https://taohuawu.club/high-performance-implementation-of-goroutine-pool
+https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/
+http://morsmachine.dk/go-scheduler
+https://github.com/golang/go/blob/master/src/runtime/proc.go" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://shellfly.org/posts/why-go-scheduler-use-gmp/" />
+<meta property="article:published_time" content="2020-03-04T20:13:27+08:00" />
+<meta property="article:modified_time" content="2020-03-04T20:13:27+08:00" />
+
+
+<meta itemprop="name" content="为什么Go的调度模型是GMP，而不是GM">
+<meta itemprop="description" content="最喜欢Go里面的一个功能就是goroutine，它提供了一个简单但是强大的语言级别的并发机制。虽然更喜欢写Python代码，不过说到并发，goroutine比Python里的yield和asyncio都好理解的多，而且性能理论上也好很多。
+为了管理goroutines，Go有自己的调度器。你可能已经知道Go的调度器使用G-M-P模型来调度goroutine。最近读一些关于Go的调度器怎么工作的文章时，一个问题开始浮现在脑子里面，为什么调度器需要一个P呢？为什么不直接就把goroutine（G）和系统的thread（M）做映射，那样不是更简单直接吗？
+继续阅读更多的文章后，我发现，在最开始Go 1.0发布的时候，调度器里确实是没有P的，就是用thread直接来调度goroutine，但是有一些性能上的问题，所以在Go 1.1的时候就引入了一种新的调度器，也就是从那时候起，调度器开始使用GMP模型。这是最开始的设计文档.
+文档里提到了在没有P的时候，调度器里的4个问题
+ 单一全局的mutex和state goroutine在不同的thread之间传递的开销 大量无用的M的内存缓存 因为系统调用产生的阻塞和解除阻塞  调度器需要用一个全局的mutex来管理和维护所有goroutine的调度状态，很难扩展。goroutine经常需要在不同的thread间传递，增加的额外的延时和开支。只有当前在运行的thread才需要内存缓存以及其他一些像堆栈的资源，被系统调用阻塞的thread其实并不需要。
+为了解决上面这些问题，Go运行时里引入了P（处理器），所以现在就有了M代表系统的thread，P代表执行Go代码需要的资源。P在M和G中间，它会获取下一个可执行的goroutine并且找到一个M来运行它。被系统调用阻塞的thread会释放P，这样P可以继续使用其他M或者创建一个新的M来处理其他goroutine。
+引入P后，调度器就有了分散的执行队列，用来执行goroutine的资源被限制在有限的P上面，因为系统调用产生的阻塞和解除阻塞也变的更高效。
+ref:
+https://taohuawu.club/high-performance-implementation-of-goroutine-pool
+https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/
+http://morsmachine.dk/go-scheduler
+https://github.com/golang/go/blob/master/src/runtime/proc.go">
+<meta itemprop="datePublished" content="2020-03-04T20:13:27&#43;08:00" />
+<meta itemprop="dateModified" content="2020-03-04T20:13:27&#43;08:00" />
+<meta itemprop="wordCount" content="18">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="为什么Go的调度模型是GMP，而不是GM"/>
+<meta name="twitter:description" content="最喜欢Go里面的一个功能就是goroutine，它提供了一个简单但是强大的语言级别的并发机制。虽然更喜欢写Python代码，不过说到并发，goroutine比Python里的yield和asyncio都好理解的多，而且性能理论上也好很多。
+为了管理goroutines，Go有自己的调度器。你可能已经知道Go的调度器使用G-M-P模型来调度goroutine。最近读一些关于Go的调度器怎么工作的文章时，一个问题开始浮现在脑子里面，为什么调度器需要一个P呢？为什么不直接就把goroutine（G）和系统的thread（M）做映射，那样不是更简单直接吗？
+继续阅读更多的文章后，我发现，在最开始Go 1.0发布的时候，调度器里确实是没有P的，就是用thread直接来调度goroutine，但是有一些性能上的问题，所以在Go 1.1的时候就引入了一种新的调度器，也就是从那时候起，调度器开始使用GMP模型。这是最开始的设计文档.
+文档里提到了在没有P的时候，调度器里的4个问题
+ 单一全局的mutex和state goroutine在不同的thread之间传递的开销 大量无用的M的内存缓存 因为系统调用产生的阻塞和解除阻塞  调度器需要用一个全局的mutex来管理和维护所有goroutine的调度状态，很难扩展。goroutine经常需要在不同的thread间传递，增加的额外的延时和开支。只有当前在运行的thread才需要内存缓存以及其他一些像堆栈的资源，被系统调用阻塞的thread其实并不需要。
+为了解决上面这些问题，Go运行时里引入了P（处理器），所以现在就有了M代表系统的thread，P代表执行Go代码需要的资源。P在M和G中间，它会获取下一个可执行的goroutine并且找到一个M来运行它。被系统调用阻塞的thread会释放P，这样P可以继续使用其他M或者创建一个新的M来处理其他goroutine。
+引入P后，调度器就有了分散的执行队列，用来执行goroutine的资源被限制在有限的P上面，因为系统调用产生的阻塞和解除阻塞也变的更高效。
+ref:
+https://taohuawu.club/high-performance-implementation-of-goroutine-pool
+https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/
+http://morsmachine.dk/go-scheduler
+https://github.com/golang/go/blob/master/src/runtime/proc.go"/>
+<meta name="twitter:site" content="@https://www.twitter.com/shell0fly"/>
+
+
+    </head>
+<body>
+    <nav class="main-nav">
+	<a href='https://shellfly.org/'> Home</a>
+
+	
+ 		<a href='/about/'>About</a>
+  	
+ 		<a href='/en/'>En</a>
+  	
+
+	
+		<a class="cta" href="https://shellfly.org/index.xml">Subscribe</a>
+	
+</nav>
+
+    <section id="wrapper">
+        
+        
+<article class="post">
+    <header>
+        <h1>为什么Go的调度模型是GMP，而不是GM</h1>
+        <h2 class="subtitle"></h2>
+        <h2 class="headline">
+        March 4, 2020
+        <br>
+        
+        </h2>
+    </header>
+    <section id="post-body">
+        <p>最喜欢Go里面的一个功能就是goroutine，它提供了一个简单但是强大的语言级别的并发机制。虽然更喜欢写Python代码，不过说到并发，goroutine比Python里的yield和asyncio都好理解的多，而且性能理论上也好很多。</p>
+<p>为了管理goroutines，Go有自己的调度器。你可能已经知道Go的调度器使用G-M-P模型来调度goroutine。最近读一些关于Go的调度器怎么工作的文章时，一个问题开始浮现在脑子里面，为什么调度器需要一个P呢？为什么不直接就把goroutine（G）和系统的thread（M）做映射，那样不是更简单直接吗？</p>
+<p>继续阅读更多的文章后，我发现，在最开始Go 1.0发布的时候，调度器里确实是没有P的，就是用thread直接来调度goroutine，但是有一些性能上的问题，所以在Go 1.1的时候就引入了一种新的调度器，也就是从那时候起，调度器开始使用GMP模型。这是最开始的<a href="https://docs.google.com/document/d/1TTj4T2JO42uD5ID9e89oa0sLKhJYD0Y_kqxDv3I3XMw">设计文档</a>.</p>
+<p>文档里提到了在没有P的时候，调度器里的4个问题</p>
+<ol>
+<li>单一全局的mutex和state</li>
+<li>goroutine在不同的thread之间传递的开销</li>
+<li>大量无用的M的内存缓存</li>
+<li>因为系统调用产生的阻塞和解除阻塞</li>
+</ol>
+<p>调度器需要用一个全局的mutex来管理和维护所有goroutine的调度状态，很难扩展。goroutine经常需要在不同的thread间传递，增加的额外的延时和开支。只有当前在运行的thread才需要内存缓存以及其他一些像堆栈的资源，被系统调用阻塞的thread其实并不需要。</p>
+<p>为了解决上面这些问题，Go运行时里引入了P（处理器），所以现在就有了M代表系统的thread，P代表执行Go代码需要的资源。P在M和G中间，它会获取下一个可执行的goroutine并且找到一个M来运行它。被系统调用阻塞的thread会释放P，这样P可以继续使用其他M或者创建一个新的M来处理其他goroutine。</p>
+<p>引入P后，调度器就有了分散的执行队列，用来执行goroutine的资源被限制在有限的P上面，因为系统调用产生的阻塞和解除阻塞也变的更高效。</p>
+<p>ref:</p>
+<p><a href="https://taohuawu.club/high-performance-implementation-of-goroutine-pool">https://taohuawu.club/high-performance-implementation-of-goroutine-pool</a></p>
+<p><a href="https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/">https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/</a></p>
+<p><a href="http://morsmachine.dk/go-scheduler">http://morsmachine.dk/go-scheduler</a></p>
+<p><a href="https://github.com/golang/go/blob/master/src/runtime/proc.go">https://github.com/golang/go/blob/master/src/runtime/proc.go</a></p>
+
+    </section>
+</article>
+
+<footer id="post-meta" class="clearfix">
+    <a href="/">
+    <img class="avatar" src="https://shellfly.org/images/avatar.png">
+    <div>
+        <span class="dark">shellfly</span>
+        <span>翼をください</span>
+    </div>
+    </a>
+    <div class="social-share" data-sites="twitter,weibo" style="float:right" data-twitter-origin="shell0fly" data-weibo-origin="shellfly"></div>
+<script src="https://shellfly.org/js/social-share.min.js"></script>
+
+</footer>
+
+<div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "shellfly" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+
+    
+    
+    
+        <li>
+            <a href="/posts/b-tree-and-database-index/">B树和数据库索引<aside class="dates">Feb 22 2020</aside></a>
+        </li>
+    
+        <li>
+            <a href="/posts/sorting-algorithms/">排序算法<aside class="dates">Feb 9 2020</aside></a>
+        </li>
+    
+        <li>
+            <a href="/posts/why-does-python-have-a-gil/">为什么Python有一个GIL<aside class="dates">Mar 19 2018</aside></a>
+        </li>
+    
+        <li>
+            <a href="/posts/my-first-post/">2018<aside class="dates">Jan 28 2018</aside></a>
+        </li>
+    
+</ul>
+
+
+
+        <footer id="footer">
+    
+        <div id="social">
+
+	
+	
+    <a class="symbol" href="https://www.github.com/shellfly">
+        <i class="fa fa-github"></i>
+    </a>
+    
+    <a class="symbol" href="https://www.twitter.com/shell0fly">
+        <i class="fa fa-twitter"></i>
+    </a>
+    
+
+
+</div>
+
+    
+    <p class="small license">
+    
+        若无特别声明，本网站作品采用<!-- raw HTML omitted -->知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议<!-- raw HTML omitted -->进行许可。
+    
+    </p>
+</footer>
+
+    </section>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="https://shellfly.org/js/main.js"></script>
+<script src="https://shellfly.org/js/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-28584868-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+
+</body>
+</html>
