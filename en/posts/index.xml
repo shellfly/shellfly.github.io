@@ -6,10 +6,20 @@
     <description>Recent content in Posts on shellfly&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 04 Mar 2020 20:13:27 +0800</lastBuildDate>
+    <lastBuildDate>Wed, 01 Jul 2020 21:00:25 +0800</lastBuildDate>
     
 	<atom:link href="https://shellfly.org/en/posts/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Nonblocking IO (or how goroutine works)</title>
+      <link>https://shellfly.org/en/posts/nonblocking-io/</link>
+      <pubDate>Wed, 01 Jul 2020 21:00:25 +0800</pubDate>
+      
+      <guid>https://shellfly.org/en/posts/nonblocking-io/</guid>
+      <description>There are two common patterns to design concurrency programs, Thread or Event-driven. They can both handle large concurrency requests but have different tradeoffs. Using thread means you have to consider synchronization, resource utilization, etc. Using event-driven means you can&amp;rsquo;t utilize multiple core CPU.
+The most frequent operations that concurrency programming handles is I/O. A program that handles large concurrency must be an I/O intensive program instead of a CPU intensive program.</description>
+    </item>
     
     <item>
       <title>Why Go scheduler uses GMP</title>

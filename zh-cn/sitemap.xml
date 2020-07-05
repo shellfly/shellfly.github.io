@@ -4,7 +4,7 @@
   
   <url>
     <loc>https://shellfly.org/posts/</loc>
-    <lastmod>2020-03-04T20:13:27+08:00</lastmod>
+    <lastmod>2020-07-01T21:00:25+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="en"
@@ -19,7 +19,7 @@
   
   <url>
     <loc>https://shellfly.org/</loc>
-    <lastmod>2020-03-04T20:13:27+08:00</lastmod>
+    <lastmod>2020-07-01T21:00:25+08:00</lastmod>
     <xhtml:link
                 rel="alternate"
                 hreflang="en"
@@ -29,6 +29,21 @@
                 rel="alternate"
                 hreflang="zh-cn"
                 href="https://shellfly.org/"
+                />
+  </url>
+  
+  <url>
+    <loc>https://shellfly.org/posts/nonblocking-io/</loc>
+    <lastmod>2020-07-01T21:00:25+08:00</lastmod>
+    <xhtml:link
+                rel="alternate"
+                hreflang="en"
+                href="https://shellfly.org/en/posts/nonblocking-io/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="zh-cn"
+                href="https://shellfly.org/posts/nonblocking-io/"
                 />
   </url>
   
