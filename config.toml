@@ -16,7 +16,7 @@ disqusShortname = "shellfly"
     name = "About"
     pre = "<i class='fa fa-heart'></i>"
     url = "/about/"
-    weight = -110
+    weight = -10
 
   [[menu.main]]
     identifier = "en"
