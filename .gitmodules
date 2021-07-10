@@ -2,3 +2,6 @@
 	path = public
 	url = https://github.com/shellfly/shellfly.github.io.git
 	branch = master
+[submodule "themes/mini"]
+	path = themes/mini
+	url = https://github.com/nodejh/hugo-theme-mini.git

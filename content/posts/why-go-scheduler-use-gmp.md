@@ -2,6 +2,7 @@
 title: "为什么Go的调度模型是GMP，而不是GM"
 date: 2020-03-04T20:13:27+08:00
 draft: false
+tags: ["Golang"]
 ---
 
 最喜欢Go里面的一个功能就是goroutine，它提供了一个简单但是强大的语言级别的并发机制。虽然更喜欢写Python代码，不过说到并发，goroutine比Python里的yield和asyncio都好理解的多，而且性能理论上也好很多。

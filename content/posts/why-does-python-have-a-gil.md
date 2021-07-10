@@ -1,7 +1,7 @@
 ---
 title: "为什么Python有一个GIL"
 date: 2018-03-19T17:14:00+08:00
-
+tags: ["Python"]
 ---
 
 GIL
