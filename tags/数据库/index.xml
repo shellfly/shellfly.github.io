@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>数据库 on shellfly&#39;s blog</title>
+    <link>https://shellfly.org/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/</link>
+    <description>Recent content in 数据库 on shellfly&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Sat, 22 Feb 2020 15:14:45 +0800</lastBuildDate>
+    
+	<atom:link href="https://shellfly.org/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>B树和数据库索引</title>
+      <link>https://shellfly.org/posts/b-tree-and-database-index/</link>
+      <pubDate>Sat, 22 Feb 2020 15:14:45 +0800</pubDate>
+      
+      <guid>https://shellfly.org/posts/b-tree-and-database-index/</guid>
+      <description>很早就知道数据库索引是用B树实现的，但其实并不理解它的工作细节，也不知道树的节点里到底存了什么。最近重读了《算法 第4版》，最后一章作为扩展有</description>
+    </item>
+    
+  </channel>
+</rss>

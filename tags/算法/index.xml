@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>算法 on shellfly&#39;s blog</title>
+    <link>https://shellfly.org/tags/%E7%AE%97%E6%B3%95/</link>
+    <description>Recent content in 算法 on shellfly&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Sun, 09 Feb 2020 21:20:50 +0800</lastBuildDate>
+    
+	<atom:link href="https://shellfly.org/tags/%E7%AE%97%E6%B3%95/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>排序算法</title>
+      <link>https://shellfly.org/posts/sorting-algorithms/</link>
+      <pubDate>Sun, 09 Feb 2020 21:20:50 +0800</pubDate>
+      
+      <guid>https://shellfly.org/posts/sorting-algorithms/</guid>
+      <description>记得很早之前的一个同事新人，跟我开始了这样一次对话： “你知道Python里面的排序用的是什么算法吗？” “肯定是快排。“，我说。 ”不对，是叫T</description>
+    </item>
+    
+  </channel>
+</rss>

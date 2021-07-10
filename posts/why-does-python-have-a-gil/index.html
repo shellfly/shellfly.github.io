@@ -1,111 +1,88 @@
 <!DOCTYPE html>
 <html lang="zh-cn">
-	<head>
+  <head>
+    <title>为什么Python有一个GIL | shellfly&#39;s blog</title>
+
     <meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="author" content="shellfly">
-<meta name="description" content="shellfly&#39;s blog about something he likes">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">    
+<meta name="viewport" content="width=device-width,minimum-scale=1">
+<meta name="description" content="GIL GIL是Global Interpreter Lock的缩写，也就是全局的解释器锁。CPython用GIL来保证同一时间只有一个线程在执行Python代码。所以即">
 <meta name="generator" content="Hugo 0.63.1" />
-<title>为什么Python有一个GIL</title>
-<link rel="stylesheet" href="https://shellfly.org/css/share.min.css">
-<link rel="shortcut icon" href="https://shellfly.org/images/favicon.ico">
-<link rel="stylesheet" href="https://shellfly.org/css/style.css">
-<link rel="stylesheet" href="https://shellfly.org/css/highlight.css">
+
+
+  <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+
+
+<link rel="stylesheet" href="/css/style.css">
+<link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
+
+ 
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-28584868-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
 
 
 
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
 
 
 
-<link href="https://shellfly.org/index.xml" rel="alternate" type="application/rss+xml" title="shellfly&#39;s blog" />
 
 
-<meta property="og:title" content="为什么Python有一个GIL" />
-<meta property="og:description" content="GIL GIL是Global Interpreter Lock的缩写，也就是全局的解释器锁。CPython用GIL来保证同一时间只有一个线程在执行Python代码。所以即使多个线程被操作系统分配到CPU不同的核里，最终的效果还是线性执行，没法利用多核的优势。这也就导致了多线程程序的执行效率大大降低。
-所以Python里到底为什么一定要有一个GIL呢？
-Python官方文档中关于GIL有一段简要的说明：
- Python interpreter is not fully thread-safe. In order to support multi-threaded Python programs, there’s a global lock, called the global interpreter lock or GIL.
- 简单翻译一下就是：因为Python解释器（CPython）自身不是完全线程安全的，所以为了支持多线程的Python程序，需要有一个全局解释器锁，也就是GIL。
-线程安全（Thread Safe） 如果用C或者Java写过多线程程序，就会知道访问共享资源的时候都是需要加锁的。CPython顾名思义，就是用C实现的Python解释器，当启用多线程的时候，为了保证代码的正确性，就需要锁，而GIL就是一把超级大锁，每个线程开始执行之前都需要先获得GIL，其他没有获得GIL的线程保持在等待状态，而像JVM中则采用细粒度(fine-grained)的锁来保证线程安全。
-通常有两种操作会导致线程释放GIL，一种是协作式的（cooperative），在执行I/O操作之前，线程会主动释放GIL。另一种是抢占式的（preemptive），线程执行一定时间后会被迫释放GIL。
-但是并不是有了GIL后，就不需要再关心线程安全了。GIL只能保证Python的内部数据结构同一时间只有一个线程可以访问，其实是保证了单独的操作是线程安全的，不需要额外的保护措施。但是如果有特定顺序的连续调用，还是需要用户显式的加锁来控制程序的正确性，也就是《深入理解Java虚拟机》中描述的相对线程安全。
-GIL的优点 使用GIL最重要的原因就是：它可以让单线程程序的速度非常快，不需要考虑锁的释放和获取，和用细粒度的锁来保证解释器状态相比，省了很多不必要的操作。
-在集成C库时，也不需要担心线程安全，如果不是线程安全的，只需要在调用的时候先获取GIL即可。
-PS: 人脑和python解释器一样也有个GIL，一次只能处理一件事，通过context switch来模拟多线程运行。所以学过Python后一定要记得一件事，开车时不要看手机。" />
-<meta property="og:type" content="article" />
-<meta property="og:url" content="https://shellfly.org/posts/why-does-python-have-a-gil/" />
-<meta property="article:published_time" content="2018-03-19T17:14:00+08:00" />
-<meta property="article:modified_time" content="2018-03-19T17:14:00+08:00" />
+  </head>
 
-
-<meta itemprop="name" content="为什么Python有一个GIL">
-<meta itemprop="description" content="GIL GIL是Global Interpreter Lock的缩写，也就是全局的解释器锁。CPython用GIL来保证同一时间只有一个线程在执行Python代码。所以即使多个线程被操作系统分配到CPU不同的核里，最终的效果还是线性执行，没法利用多核的优势。这也就导致了多线程程序的执行效率大大降低。
-所以Python里到底为什么一定要有一个GIL呢？
-Python官方文档中关于GIL有一段简要的说明：
- Python interpreter is not fully thread-safe. In order to support multi-threaded Python programs, there’s a global lock, called the global interpreter lock or GIL.
- 简单翻译一下就是：因为Python解释器（CPython）自身不是完全线程安全的，所以为了支持多线程的Python程序，需要有一个全局解释器锁，也就是GIL。
-线程安全（Thread Safe） 如果用C或者Java写过多线程程序，就会知道访问共享资源的时候都是需要加锁的。CPython顾名思义，就是用C实现的Python解释器，当启用多线程的时候，为了保证代码的正确性，就需要锁，而GIL就是一把超级大锁，每个线程开始执行之前都需要先获得GIL，其他没有获得GIL的线程保持在等待状态，而像JVM中则采用细粒度(fine-grained)的锁来保证线程安全。
-通常有两种操作会导致线程释放GIL，一种是协作式的（cooperative），在执行I/O操作之前，线程会主动释放GIL。另一种是抢占式的（preemptive），线程执行一定时间后会被迫释放GIL。
-但是并不是有了GIL后，就不需要再关心线程安全了。GIL只能保证Python的内部数据结构同一时间只有一个线程可以访问，其实是保证了单独的操作是线程安全的，不需要额外的保护措施。但是如果有特定顺序的连续调用，还是需要用户显式的加锁来控制程序的正确性，也就是《深入理解Java虚拟机》中描述的相对线程安全。
-GIL的优点 使用GIL最重要的原因就是：它可以让单线程程序的速度非常快，不需要考虑锁的释放和获取，和用细粒度的锁来保证解释器状态相比，省了很多不必要的操作。
-在集成C库时，也不需要担心线程安全，如果不是线程安全的，只需要在调用的时候先获取GIL即可。
-PS: 人脑和python解释器一样也有个GIL，一次只能处理一件事，通过context switch来模拟多线程运行。所以学过Python后一定要记得一件事，开车时不要看手机。">
-<meta itemprop="datePublished" content="2018-03-19T17:14:00&#43;08:00" />
-<meta itemprop="dateModified" content="2018-03-19T17:14:00&#43;08:00" />
-<meta itemprop="wordCount" content="42">
-
-
-
-<meta itemprop="keywords" content="" />
-<meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="为什么Python有一个GIL"/>
-<meta name="twitter:description" content="GIL GIL是Global Interpreter Lock的缩写，也就是全局的解释器锁。CPython用GIL来保证同一时间只有一个线程在执行Python代码。所以即使多个线程被操作系统分配到CPU不同的核里，最终的效果还是线性执行，没法利用多核的优势。这也就导致了多线程程序的执行效率大大降低。
-所以Python里到底为什么一定要有一个GIL呢？
-Python官方文档中关于GIL有一段简要的说明：
- Python interpreter is not fully thread-safe. In order to support multi-threaded Python programs, there’s a global lock, called the global interpreter lock or GIL.
- 简单翻译一下就是：因为Python解释器（CPython）自身不是完全线程安全的，所以为了支持多线程的Python程序，需要有一个全局解释器锁，也就是GIL。
-线程安全（Thread Safe） 如果用C或者Java写过多线程程序，就会知道访问共享资源的时候都是需要加锁的。CPython顾名思义，就是用C实现的Python解释器，当启用多线程的时候，为了保证代码的正确性，就需要锁，而GIL就是一把超级大锁，每个线程开始执行之前都需要先获得GIL，其他没有获得GIL的线程保持在等待状态，而像JVM中则采用细粒度(fine-grained)的锁来保证线程安全。
-通常有两种操作会导致线程释放GIL，一种是协作式的（cooperative），在执行I/O操作之前，线程会主动释放GIL。另一种是抢占式的（preemptive），线程执行一定时间后会被迫释放GIL。
-但是并不是有了GIL后，就不需要再关心线程安全了。GIL只能保证Python的内部数据结构同一时间只有一个线程可以访问，其实是保证了单独的操作是线程安全的，不需要额外的保护措施。但是如果有特定顺序的连续调用，还是需要用户显式的加锁来控制程序的正确性，也就是《深入理解Java虚拟机》中描述的相对线程安全。
-GIL的优点 使用GIL最重要的原因就是：它可以让单线程程序的速度非常快，不需要考虑锁的释放和获取，和用细粒度的锁来保证解释器状态相比，省了很多不必要的操作。
-在集成C库时，也不需要担心线程安全，如果不是线程安全的，只需要在调用的时候先获取GIL即可。
-PS: 人脑和python解释器一样也有个GIL，一次只能处理一件事，通过context switch来模拟多线程运行。所以学过Python后一定要记得一件事，开车时不要看手机。"/>
-<meta name="twitter:site" content="@https://www.twitter.com/shell0fly"/>
-
-
-    </head>
-<body>
-    <nav class="main-nav">
-	<a href='https://shellfly.org/'> Home</a>
+  <body>
+    <nav class="navigation">
+	
+		<a href="/"> <span class="arrow">←</span>Home</a>
+	
+	<a href="/posts">Archive</a>
+	<a href="/tags">Tags</a>
+	<a href="/about">About</a>
 
 	
- 		<a href='/en/'>En</a>
-  	
- 		<a href='/about/'>About</a>
-  	
 
 	
-		<a class="cta" href="https://shellfly.org/index.xml">Subscribe</a>
+	  <a class="button" href="https://shellfly.org/index.xml">Subscribe</a>
 	
 </nav>
 
-    <section id="wrapper">
-        
-        
-<article class="post">
-    <header>
-        <h1>为什么Python有一个GIL</h1>
-        <h2 class="subtitle"></h2>
-        <h2 class="headline">
-        March 19, 2018
-        <br>
-        
-        </h2>
-    </header>
-    <section id="post-body">
-        <h1 id="gil">GIL</h1>
+
+    <main class="main">
+      
+
+<section id="single">
+    <h1 class="title">为什么Python有一个GIL</h1>
+
+    <div class="tip">
+        <span>
+          Mar 19, 2018 17:14
+        </span>
+        <span class="split">
+          ·
+        </span>
+        <span>
+          
+            954 words
+          
+        </span>
+        <span class="split">
+          ·
+        </span>
+        <span>
+          2 minute read
+        </span>
+    </div>
+
+    <div class="content">
+      <h1 id="gil">GIL</h1>
 <p>GIL是Global Interpreter Lock的缩写，也就是全局的解释器锁。CPython用GIL来保证同一时间只有一个线程在执行Python代码。所以即使多个线程被操作系统分配到CPU不同的核里，最终的效果还是线性执行，没法利用多核的优势。这也就导致了多线程程序的执行效率大大降低。</p>
 <p>所以Python里到底为什么一定要有一个GIL呢？</p>
 <p>Python官方文档中关于GIL有一段简要的说明：</p>
@@ -123,23 +100,20 @@ PS: 人脑和python解释器一样也有个GIL，一次只能处理一件事，�
 <p>PS:
 人脑和python解释器一样也有个GIL，一次只能处理一件事，通过context switch来模拟多线程运行。所以学过Python后一定要记得一件事，开车时不要看手机。</p>
 
-    </section>
-</article>
-
-<footer id="post-meta" class="clearfix">
-    <a href="/">
-    <img class="avatar" src="https://shellfly.org/images/avatar.png">
-    <div>
-        <span class="dark">shellfly</span>
-        <span>翼をください</span>
     </div>
-    </a>
-    <div class="social-share" data-sites="twitter,weibo" style="float:right" data-twitter-origin="shell0fly" data-weibo-origin="shellfly"></div>
-<script src="https://shellfly.org/js/social-share.min.js"></script>
 
-</footer>
-
-<div id="disqus_thread"></div>
+    
+        <div class="tags">
+            
+                <a href="https://shellfly.org/tags/python">Python</a>
+            
+        </div>
+    
+    
+     
+  <div id="comment">
+    
+    <div id="disqus_thread"></div>
 <script type="application/javascript">
     var disqus_config = function () {
     
@@ -159,85 +133,76 @@ PS: 人脑和python解释器一样也有个GIL，一次只能处理一件事，�
 </script>
 <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 <a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-
-<ul id="post-list" class="archive readmore">
-    <h3>Read more</h3>
-
-    
-    
-    
-        <li>
-            <a href="/posts/nonblocking-io/">非阻塞 IO (goroutine是怎样工作的)<aside class="dates">Jul 1 2020</aside></a>
-        </li>
-    
-        <li>
-            <a href="/posts/why-go-scheduler-use-gmp/">为什么Go的调度模型是GMP，而不是GM<aside class="dates">Mar 4 2020</aside></a>
-        </li>
-    
-        <li>
-            <a href="/posts/b-tree-and-database-index/">B树和数据库索引<aside class="dates">Feb 22 2020</aside></a>
-        </li>
-    
-        <li>
-            <a href="/posts/sorting-algorithms/">排序算法<aside class="dates">Feb 9 2020</aside></a>
-        </li>
-    
-        <li>
-            <a href="/posts/my-first-post/">2018<aside class="dates">Jan 28 2018</aside></a>
-        </li>
-    
-</ul>
+  </div>
 
 
+</section>
 
-        <footer id="footer">
+
+    </main>
+    
+    <footer id="footer">
     
         <div id="social">
 
-	
-	
-    <a class="symbol" href="https://www.github.com/shellfly">
-        <i class="fa fa-github"></i>
-    </a>
+
+    <a class="symbol" href="https://www.github.com/shellfly" target="_blank">
+        
+        <svg fill="#bbbbbb" width="28" height="28"  viewBox="0 0 72 72" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     
-    <a class="symbol" href="https://www.twitter.com/shell0fly">
-        <i class="fa fa-twitter"></i>
+    <title>Github</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Social-Icons---Rounded-Black" transform="translate(-264.000000, -939.000000)">
+            <g id="Github" transform="translate(264.000000, 939.000000)">
+                <path d="M8,72 L64,72 C68.418278,72 72,68.418278 72,64 L72,8 C72,3.581722 68.418278,-8.11624501e-16 64,0 L8,0 C3.581722,8.11624501e-16 -5.41083001e-16,3.581722 0,8 L0,64 C5.41083001e-16,68.418278 3.581722,72 8,72 Z" id="Rounded" fill="#bbbbbb"></path>
+                <path d="M35.9985,13 C22.746,13 12,23.7870921 12,37.096644 C12,47.7406712 18.876,56.7718301 28.4145,59.9584121 C29.6145,60.1797862 30.0525,59.4358488 30.0525,58.7973276 C30.0525,58.2250681 30.0315,56.7100863 30.0195,54.6996482 C23.343,56.1558981 21.9345,51.4693938 21.9345,51.4693938 C20.844,48.6864054 19.2705,47.9454799 19.2705,47.9454799 C17.091,46.4500754 19.4355,46.4801943 19.4355,46.4801943 C21.843,46.6503662 23.1105,48.9634994 23.1105,48.9634994 C25.2525,52.6455377 28.728,51.5823398 30.096,50.9649018 C30.3135,49.4077535 30.9345,48.3460615 31.62,47.7436831 C26.2905,47.1352808 20.688,45.0691228 20.688,35.8361671 C20.688,33.2052792 21.6225,31.0547881 23.1585,29.3696344 C22.911,28.7597262 22.0875,26.3110578 23.3925,22.9934585 C23.3925,22.9934585 25.4085,22.3459017 29.9925,25.4632101 C31.908,24.9285993 33.96,24.6620468 36.0015,24.6515052 C38.04,24.6620468 40.0935,24.9285993 42.0105,25.4632101 C46.5915,22.3459017 48.603,22.9934585 48.603,22.9934585 C49.9125,26.3110578 49.089,28.7597262 48.8415,29.3696344 C50.3805,31.0547881 51.309,33.2052792 51.309,35.8361671 C51.309,45.0917119 45.6975,47.1292571 40.3515,47.7256117 C41.2125,48.4695491 41.9805,49.9393525 41.9805,52.1877301 C41.9805,55.4089489 41.9505,58.0067059 41.9505,58.7973276 C41.9505,59.4418726 42.3825,60.1918338 43.6005,59.9554002 C53.13,56.7627944 60,47.7376593 60,37.096644 C60,23.7870921 49.254,13 35.9985,13" fill="#FFFFFF"></path>
+            </g>
+        </g>
+    </g>
+</svg>
     </a>
-    
+
+    <a class="symbol" href="https://www.twitter.com/shell0fly" target="_blank">
+        
+        <svg fill="#bbbbbb" width="28" height="28" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="438.536px" height="438.536px" viewBox="0 0 438.536 438.536" style="enable-background:new 0 0 438.536 438.536;"
+	 xml:space="preserve">
+<g>
+	<path d="M414.41,24.123C398.333,8.042,378.963,0,356.315,0H82.228C59.58,0,40.21,8.042,24.126,24.123
+		C8.045,40.207,0.003,59.576,0.003,82.225v274.084c0,22.647,8.042,42.018,24.123,58.102c16.084,16.084,35.454,24.126,58.102,24.126
+		h274.084c22.648,0,42.018-8.042,58.095-24.126c16.084-16.084,24.126-35.454,24.126-58.102V82.225
+		C438.532,59.576,430.49,40.204,414.41,24.123z M335.471,168.735c0.191,1.713,0.288,4.278,0.288,7.71
+		c0,15.989-2.334,32.025-6.995,48.104c-4.661,16.087-11.8,31.504-21.416,46.254c-9.606,14.749-21.074,27.791-34.396,39.115
+		c-13.325,11.32-29.311,20.365-47.968,27.117c-18.648,6.762-38.637,10.143-59.953,10.143c-33.116,0-63.76-8.952-91.931-26.836
+		c4.568,0.568,9.329,0.855,14.275,0.855c27.6,0,52.439-8.565,74.519-25.7c-12.941-0.185-24.506-4.179-34.688-11.991
+		c-10.185-7.803-17.273-17.699-21.271-29.691c4.947,0.76,8.658,1.137,11.132,1.137c4.187,0,9.042-0.76,14.56-2.279
+		c-13.894-2.669-25.598-9.562-35.115-20.697c-9.519-11.136-14.277-23.84-14.277-38.114v-0.571
+		c10.085,4.755,19.602,7.229,28.549,7.422c-17.321-11.613-25.981-28.265-25.981-49.963c0-10.66,2.758-20.747,8.278-30.264
+		c15.035,18.464,33.311,33.213,54.816,44.252c21.507,11.038,44.54,17.227,69.092,18.558c-0.95-3.616-1.427-8.186-1.427-13.704
+		c0-16.562,5.853-30.692,17.56-42.399c11.703-11.706,25.837-17.561,42.394-17.561c17.515,0,32.079,6.283,43.688,18.846
+		c13.134-2.474,25.892-7.33,38.26-14.56c-4.757,14.652-13.613,25.788-26.55,33.402c12.368-1.716,23.88-4.95,34.537-9.708
+		C357.458,149.793,347.462,160.166,335.471,168.735z"/>
+</g>
+</svg>
+
+    </a>
 
 
 </div>
 
     
-    <p class="small license">
+
+    <p class="copyright">
     
         若无特别声明，本网站作品采用<!-- raw HTML omitted -->知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议<!-- raw HTML omitted -->进行许可。
     
     </p>
+    <p class="powerby">
+        Powered by <a href="http://www.gohugo.io/">Hugo</a> Theme By <a href="https://github.com/nodejh/hugo-theme-cactus-plus">nodejh</a>
+    </p>
 </footer>
 
-    </section>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-<script src="https://shellfly.org/js/main.js"></script>
-<script src="https://shellfly.org/js/highlight.js"></script>
-<script>hljs.initHighlightingOnLoad();</script>
-
-
-
-
-<script type="application/javascript">
-var doNotTrack = false;
-if (!doNotTrack) {
-	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-	ga('create', 'UA-28584868-1', 'auto');
-	
-	ga('send', 'pageview');
-}
-</script>
-
-
-</body>
+  </body>
 </html>
