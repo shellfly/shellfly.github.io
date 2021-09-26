@@ -65,5 +65,14 @@
       <description>2018 希望从现在开始可以创造一些东西</description>
     </item>
     
+    <item>
+      <title></title>
+      <link>https://shellfly.org/game-of-life/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://shellfly.org/game-of-life/</guid>
+      <description></description>
+    </item>
+    
   </channel>
 </rss>
