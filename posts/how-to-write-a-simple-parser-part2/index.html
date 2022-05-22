@@ -70,7 +70,7 @@ if (!doNotTrack) {
     </span>
     <span>
       
-      2230 words
+      2312 words
       
     </span>
     <span class="split">
@@ -272,7 +272,7 @@ if (!doNotTrack) {
 </span></code></pre></td></tr></table>
 </div>
 </div><h3 id="3-parse">3. Parse</h3>
-<p>解析的主要过程是先对输入生成Lexer，然后递归调用 <code>parse_bp</code>，解析的过程我们需要比较操作符的优先级，所以也需要实现一个方法用来查询符号的优先级。</p>
+<p>解析的主要过程是先对输入生成Lexer，然后递归调用 <code>parse_bp</code>，解析的过程我们需要比较操作符的优先级，所以也需要实现一个方法用来查询符号的优先级，第一步中我们只支持中缀操作符，所以只实现 <code>led</code> 方法，返回操作符的左右优先级。</p>
 <div class="highlight"><div style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
 <table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
 <pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
@@ -392,7 +392,7 @@ if (!doNotTrack) {
 <li>41-46: 获取当前符号的 <code>lbp</code> 和新的 <code>rbp</code>，如果当前符号的优先级更低，则返回left作为上一层的right，否则说明需要和后面的操作关联，递归调用获取 <code>right</code> ， 组合Expr，继续查看后面的token</li>
 </ul>
 <h3 id="4-通过测试">4. 通过测试</h3>
-<p>这个时候算法已经实现完了，不过Rust中的结构体，没有默认的打印方式，所以我们需要告诉它我们希望输出的格式。</p>
+<p>这个时候第一步的算法已经算实现完了，不过Rust中的结构体没有默认的打印方式，所以我们需要告诉它我们希望输出的格式。</p>
 <div class="highlight"><div style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
 <table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
 <pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
@@ -494,22 +494,22 @@ if (!doNotTrack) {
 </span></code></pre></td></tr></table>
 </div>
 </div><h3 id="5-支持前缀操作符">5. 支持前缀操作符</h3>
-<p>前缀操作需要有更高的优先级</p>
+<p>前缀操作只有向右绑定的优先级，在函数 <code>nud</code> 里实现，在我们的语法中，当 <code>+</code> 和 <code>-</code> 作为前缀时，它们有更高的优先级。</p>
 <div class="highlight"><div style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
 <table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
 <pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
 </span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
 </span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
-</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
-</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
 </span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
 </span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
 </span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
@@ -557,16 +557,16 @@ if (!doNotTrack) {
 <pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust">...<span style="color:#bbb">
 </span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">impl</span><span style="color:#bbb"> </span>Token<span style="color:#bbb"> </span>{<span style="color:#bbb">
 </span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#080;font-style:italic">// nud return right binding power
-</span><span style="color:#080;font-style:italic"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">nud</span>(<span style="color:#666">&amp;</span>self)<span style="color:#bbb"> </span>-&gt; <span style="color:#a2f">Option</span><span style="color:#666">&lt;</span><span style="color:#0b0;font-weight:bold">u8</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
-</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>self<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#080;font-style:italic"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">nud</span>(<span style="color:#666">&amp;</span>self)<span style="color:#bbb"> </span>-&gt; <span style="color:#a2f">Option</span><span style="color:#666">&lt;</span><span style="color:#0b0;font-weight:bold">u8</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>self<span style="color:#bbb"> </span>{<span style="color:#bbb">
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>Token::Op(s)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>s.as_str()<span style="color:#bbb"> </span>{<span style="color:#bbb">
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span><span style="color:#b44">&#34;+&#34;</span><span style="color:#bbb"> </span><span style="color:#666">|</span><span style="color:#bbb"> </span><span style="color:#b44">&#34;-&#34;</span><span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f">Some</span>(<span style="color:#666">30</span>),<span style="color:#bbb">
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span>_<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f">None</span>,<span style="color:#bbb">
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>},<span style="color:#bbb">
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>_<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f">None</span>,<span style="color:#bbb">
-</span></span><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
-</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">   
-</span><span style="color:#bbb">    </span>...<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">   
+</span></span><span style="color:#bbb">    </span>...<span style="color:#bbb">
 </span><span style="color:#bbb"></span>}<span style="color:#bbb">
 </span><span style="color:#bbb"></span>...<span style="color:#bbb">
 </span><span style="color:#bbb"></span><span style="color:#080;font-style:italic">// parse receive an input text and transform it to Expr
@@ -627,8 +627,8 @@ if (!doNotTrack) {
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
-</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
-</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
 </span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
 </span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
 </span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
@@ -693,8 +693,8 @@ if (!doNotTrack) {
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>Self::Op(op)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>op<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#b44">&#34;)&#34;</span>,<span style="color:#bbb">
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>_<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">false</span>,<span style="color:#bbb">
 </span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
-</span></span><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
-</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>...<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">    </span>...<span style="color:#bbb">
 </span><span style="color:#bbb"></span>}<span style="color:#bbb">
 </span><span style="color:#bbb"></span><span style="color:#bbb">
 </span><span style="color:#bbb"></span><span style="color:#080;font-style:italic">// parse receive an input text and transform it to Expr
@@ -742,7 +742,7 @@ if (!doNotTrack) {
 </span><span style="color:#bbb"></span><span style="color:#bbb">
 </span><span style="color:#bbb"></span><span style="color:#080">#[</span><span style="color:#080">test</span><span style="color:#080">]</span><span style="color:#bbb">
 </span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">test_group</span>()<span style="color:#bbb"> </span>{<span style="color:#bbb">
-</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>s<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse(<span style="color:#b44">&#34;(-1+2) * 3&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>s<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse(<span style="color:#b44">&#34;( -1 + 2 ) * 3&#34;</span>);<span style="color:#bbb">
 </span><span style="color:#bbb"></span><span style="color:#bbb">    </span>assert_eq<span style="color:#666">!</span>(s.to_string(),<span style="color:#bbb"> </span><span style="color:#b44">&#34;(* (+ (- 1) 2) 3)&#34;</span>);<span style="color:#bbb">
 </span><span style="color:#bbb"></span>}<span style="color:#bbb">
 </span></code></pre></td></tr></table>
