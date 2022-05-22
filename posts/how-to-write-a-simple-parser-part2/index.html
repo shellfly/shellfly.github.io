@@ -70,7 +70,7 @@ if (!doNotTrack) {
     </span>
     <span>
       
-      2235 words
+      2230 words
       
     </span>
     <span class="split">
@@ -134,10 +134,10 @@ if (!doNotTrack) {
 </a>来介绍这个算法，之后开始有更多人关注并使用TDOP来实现parser。</p>
 <p>TDOP也是一种递归下降的算法，它的特别之处在于以下几点：</p>
 <ol>
-<li>递归的函数和具体的符号（+-*/、if、else等）关联（而不是像其他基于BNF语法parser，和一条规则关联）</li>
-<li>根据符号的左边是否有一个前置的表达式，每个符号可以有两种不同的解析方法，在Pratt的论文中称作 <code>nud</code>（null denotation）和 <code>led</code> （left denotation）， <code>nud</code> 不关心左边的符号，用来解析前缀（prefix），<code>led</code> 需要关心它左边的符号，用来解析中缀（infix）和后缀（suffix）的情况，</li>
-<li>每个符号有两个优先级 <code>lbp</code> 和 <code>rbp</code>，分别表示left binding power和right binding power。比如 <code>1+2*3</code> 中， <code>+</code> 和 <code>*</code> 是符号，2是一个表达式，在解析的时候 <code>+</code> 的 <code>rbp</code> 小于 <code>*</code> 号的 <code>lbp</code> 那么 <code>2</code> 就应该跟 <code>*</code> 先关联。</li>
-<li><code>lbp</code> 由当前符号查询获得，<code>rbp</code> 由递归的函数调用传递过来，初始为0。</li>
+<li>递归的函数和具体的操作符（+-*/、if、else等）关联（而不是像其他基于BNF语法parser，和一条规则关联）</li>
+<li>根据操作符的位置，每个符号可以有两种不同的解析方法，在Pratt的论文中称作 <code>nud</code>（null denotation）和 <code>led</code> （left denotation）， 作为 <code>nud</code> 时，操作符不关心左边的符号，用来处理前缀（prefix），<code>led</code> 需要关心它左边的符号，用来处理中缀（infix）和后缀（suffix）的情况</li>
+<li>每个符号有两个优先级 <code>lbp</code> 和 <code>rbp</code>，分别表示left binding power和right binding power。比如 <code>1+2*3</code> 中， <code>+</code> 和 <code>*</code> 是符号，2是一个表达式，在解析的时候 <code>+</code> 的 <code>rbp</code> 小于 <code>*</code> 号的 <code>lbp</code> 那么 <code>2</code> 就应该跟 <code>*</code> 先关联</li>
+<li><code>lbp</code> 由当前符号查询获得，<code>rbp</code> 由递归的函数调用传递过来，初始为0</li>
 </ol>
 <h2 id="代码">代码</h2>
 <p>代码实现使用的是Rust，选择Rust一是主要因为最近在学Rust，二也是觉得Rust有丰富的类型系统，尤其是Enum，非常适合用来表达这里面的概念，类型也能帮助我们理解数据结构和函数的输入输出。</p>
