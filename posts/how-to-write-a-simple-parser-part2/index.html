@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <title>怎样写一个简单的Parser（2） | shellfly&#39;s blog</title>
+
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">    
+<meta name="viewport" content="width=device-width,minimum-scale=1">
+<meta name="description" content="介绍 在上一篇文章中，简单介绍了一下parser的背景知识，这一次我们来手写一个简单的parser，还是用这个简单的例子开始，我们的任务是实现">
+<meta name="generator" content="Hugo 0.63.1" />
+
+
+  <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+
+
+<link rel="stylesheet" href="/css/style.css">
+<link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
+
+ 
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-28584868-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+
+
+
+
+
+  </head>
+
+  <body>
+    <nav class="navigation">
+	
+		<a href="/"> <span class="arrow">←</span>Home</a>
+	
+	<a href="/posts">Archive</a>
+	<a href="/tags">Tags</a>
+	<a href="/about">About</a>
+
+	
+
+	
+	  <a class="button" href="https://shellfly.org/index.xml">Subscribe</a>
+	
+</nav>
+
+
+    <main class="main">
+      
+
+<section id="single">
+  <h1 class="title">怎样写一个简单的Parser（2）</h1>
+
+  <div class="tip">
+    <span>
+      May 22, 2022 11:14
+    </span>
+    <span class="split">
+      ·
+    </span>
+    <span>
+      
+      2235 words
+      
+    </span>
+    <span class="split">
+      ·
+    </span>
+    <span>
+      5 minute read
+    </span>
+  </div>
+
+  <div class="toc">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#介绍">介绍</a></li>
+    <li><a href="#todp">TODP</a></li>
+    <li><a href="#代码">代码</a>
+      <ul>
+        <li><a href="#1-定义数据结构">1. 定义数据结构。</a></li>
+        <li><a href="#2-简单的lexer">2. 简单的Lexer。</a></li>
+        <li><a href="#3-parse">3. Parse</a></li>
+        <li><a href="#4-通过测试">4. 通过测试</a></li>
+        <li><a href="#5-支持前缀操作符">5. 支持前缀操作符</a></li>
+        <li><a href="#6-支持括号">6. 支持括号</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+  </div>
+
+  <div class="content">
+    <h2 id="介绍">介绍</h2>
+<p>在上一篇文章中，简单介绍了一下parser的背景知识，这一次我们来手写一个简单的parser，还是用这个简单的例子开始，我们的任务是实现一个paser, 它可以接受输入左边的表达式，生成右边的AST。</p>
+<div class="highlight"><pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-txt" data-lang="txt">                             +
+                 Parser     / \
+ &#34;1 + 2 * 3&#34;    -------&gt;   1   *
+                              / \
+                             2   3
+</code></pre></div><p>然后我们会继续扩展我们的parser，让它支持前缀表达式和括号，使得它可以解析更复杂的表达式，比如：<code>( -1 + 2 ) * 3 - -4</code></p>
+<h2 id="todp">TODP</h2>
+<p>Parser的实现的算法是基于TDOP(Top Down Operator Precedence)，这是<a 
+    href="https://en.wikipedia.org/wiki/Vaughan_Pratt"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    Vaughan Pratt
+</a>发表于1973年的论文，论文中他提出了一种“易于理解，实现简单，使用方便，非常高效并且足够灵活的适应各种语法需求”的方法，并且提到，这种明显的乌托邦式的方法之所以没有被广泛采用，就是因为大家都关注在BNF以及相关LL，LR文法上，他并不认为这是一个有前途的方向。2007年Douglas Crockford（《JavaScript: The Good Parts》的作者）基于TDOP实现了JSLint的parser，并且写了一篇<a 
+    href="http://crockford.com/javascript/tdop/tdop.html"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    blog
+</a>来介绍这个算法，之后开始有更多人关注并使用TDOP来实现parser。</p>
+<p>TDOP也是一种递归下降的算法，它的特别之处在于以下几点：</p>
+<ol>
+<li>递归的函数和具体的符号（+-*/、if、else等）关联（而不是像其他基于BNF语法parser，和一条规则关联）</li>
+<li>根据符号的左边是否有一个前置的表达式，每个符号可以有两种不同的解析方法，在Pratt的论文中称作 <code>nud</code>（null denotation）和 <code>led</code> （left denotation）， <code>nud</code> 不关心左边的符号，用来解析前缀（prefix），<code>led</code> 需要关心它左边的符号，用来解析中缀（infix）和后缀（suffix）的情况，</li>
+<li>每个符号有两个优先级 <code>lbp</code> 和 <code>rbp</code>，分别表示left binding power和right binding power。比如 <code>1+2*3</code> 中， <code>+</code> 和 <code>*</code> 是符号，2是一个表达式，在解析的时候 <code>+</code> 的 <code>rbp</code> 小于 <code>*</code> 号的 <code>lbp</code> 那么 <code>2</code> 就应该跟 <code>*</code> 先关联。</li>
+<li><code>lbp</code> 由当前符号查询获得，<code>rbp</code> 由递归的函数调用传递过来，初始为0。</li>
+</ol>
+<h2 id="代码">代码</h2>
+<p>代码实现使用的是Rust，选择Rust一是主要因为最近在学Rust，二也是觉得Rust有丰富的类型系统，尤其是Enum，非常适合用来表达这里面的概念，类型也能帮助我们理解数据结构和函数的输入输出。</p>
+<h3 id="1-定义数据结构">1. 定义数据结构。</h3>
+<p>第一步我们需要定义数据结构来表示输入的Token，以及最终的AST。为了方便，我们用lisp中的S表达式来代替AST，第一步的任务就是把 <code>1+2*3</code> 转换成 <code>(+ 1 (* 2 3))</code> 的形式。</p>
+<div class="highlight"><div style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#080;font-style:italic">// Token is either a Symbol like &#34;1&#34;, &#34;2&#34;, or an Op like &#34;+&#34;, &#34;*&#34;
+</span><span style="color:#080;font-style:italic"></span><span style="color:#a2f;font-weight:bold">enum</span> <span style="color:#00f">Token</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>Symbol(<span style="color:#a2f">String</span>),<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>Op(<span style="color:#a2f">String</span>),<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#080;font-style:italic">// Expr is a lisp S-expression, it&#39;s either an atom or a list of atom.
+</span><span style="color:#080;font-style:italic"></span><span style="color:#a2f;font-weight:bold">enum</span> <span style="color:#00f">Expr</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>Atom(Token),<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>Cons(Token,<span style="color:#bbb"> </span><span style="color:#a2f">Vec</span><span style="color:#666">&lt;</span>Expr<span style="color:#666">&gt;</span>),<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#080;font-style:italic">// parse receive an input text and transform it to Expr
+</span><span style="color:#080;font-style:italic"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">parse</span>(input: <span style="color:#a2f">&amp;</span><span style="color:#0b0;font-weight:bold">str</span>)<span style="color:#bbb"> </span>-&gt; <span style="color:#00f">Expr</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>todo<span style="color:#666">!</span>()<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#080">#[</span><span style="color:#080">test</span><span style="color:#080">]</span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">test_parse</span>()<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>s<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse(<span style="color:#b44">&#34;1 + 2 * 3&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>assert_eq<span style="color:#666">!</span>(s.to_string(),<span style="color:#bbb"> </span><span style="color:#b44">&#34;(+ 1 (* 2 3))&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>s<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse(<span style="color:#b44">&#34;1 * 2 + 3&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>assert_eq<span style="color:#666">!</span>(s.to_string(),<span style="color:#bbb"> </span><span style="color:#b44">&#34;(+ (* 1 2) 3)&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="2-简单的lexer">2. 简单的Lexer。</h3>
+<p>Parser之前还需要一个Lexing的过程，它负责把输入字符串变成一个一个的符号传给Parser，我们的Lexer比较简单，只需要按照空格把字符串分开即可，为了配合后面的Parser使用，也定义了 <code>pop</code> 和 <code>peek</code> 方法。</p>
+<div class="highlight"><div style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#a2f;font-weight:bold">struct</span> <span style="color:#00f">Lexer</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>tokens: <span style="color:#a2f">Vec</span><span style="color:#666">&lt;</span>Token<span style="color:#666">&gt;</span>,<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">impl</span><span style="color:#bbb"> </span>Lexer<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">new</span>(input: <span style="color:#a2f">&amp;</span><span style="color:#0b0;font-weight:bold">str</span>)<span style="color:#bbb"> </span>-&gt; <span style="color:#00f">Lexer</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>tokens<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>input<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">            </span>.split_whitespace()<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">            </span>.map(<span style="color:#666">|</span>c<span style="color:#666">|</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>c<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">                </span><span style="color:#b44">&#34;+&#34;</span><span style="color:#bbb"> </span><span style="color:#666">|</span><span style="color:#bbb"> </span><span style="color:#b44">&#34;-&#34;</span><span style="color:#bbb"> </span><span style="color:#666">|</span><span style="color:#bbb"> </span><span style="color:#b44">&#34;*&#34;</span><span style="color:#bbb"> </span><span style="color:#666">|</span><span style="color:#bbb"> </span><span style="color:#b44">&#34;/&#34;</span><span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>Token::Op(c.to_string()),<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">                </span>_<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>Token::Symbol(c.to_string()),<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">            </span>})<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">            </span>.collect::<span style="color:#666">&lt;</span><span style="color:#a2f">Vec</span><span style="color:#666">&lt;</span>_<span style="color:#666">&gt;</span><span style="color:#666">&gt;</span>();<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#080;font-style:italic">// reverse tokens here so that we can pop out first token without
+</span><span style="color:#080;font-style:italic"></span><span style="color:#bbb">        </span><span style="color:#080;font-style:italic">// shifting all elements.
+</span><span style="color:#080;font-style:italic"></span><span style="color:#bbb">        </span>tokens.reverse();<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>Lexer<span style="color:#bbb"> </span>{<span style="color:#bbb"> </span>tokens<span style="color:#bbb"> </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#080;font-style:italic">// pop the first token of origin input, from left to right
+</span><span style="color:#080;font-style:italic"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">pop</span>(<span style="color:#666">&amp;</span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>self)<span style="color:#bbb"> </span>-&gt; <span style="color:#a2f">Option</span><span style="color:#666">&lt;</span>Token<span style="color:#666">&gt;</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>self.tokens.pop()<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#080;font-style:italic">// check first token without pop out it
+</span><span style="color:#080;font-style:italic"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">peek</span>(<span style="color:#666">&amp;</span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>self)<span style="color:#bbb"> </span>-&gt; <span style="color:#a2f">Option</span><span style="color:#666">&lt;</span><span style="color:#666">&amp;</span>Token<span style="color:#666">&gt;</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>self.tokens.last()<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="3-parse">3. Parse</h3>
+<p>解析的主要过程是先对输入生成Lexer，然后递归调用 <code>parse_bp</code>，解析的过程我们需要比较操作符的优先级，所以也需要实现一个方法用来查询符号的优先级。</p>
+<div class="highlight"><div style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#080;font-style:italic">// Token is either a Symbol like &#34;1&#34;, &#34;2&#34;, or an Op like &#34;+&#34;, &#34;*&#34;
+</span><span style="color:#080;font-style:italic"></span><span style="color:#a2f;font-weight:bold">enum</span> <span style="color:#00f">Token</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>Symbol(<span style="color:#a2f">String</span>),<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>Op(<span style="color:#a2f">String</span>),<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">impl</span><span style="color:#bbb"> </span>Token<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#080;font-style:italic">// nud return right binding power
+</span><span style="color:#080;font-style:italic"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">nud</span>(<span style="color:#666">&amp;</span>self)<span style="color:#bbb"> </span>-&gt; <span style="color:#0b0;font-weight:bold">u8</span> {<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>todo<span style="color:#666">!</span>()<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#080;font-style:italic">// led return left and right binding power
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#080;font-style:italic"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">led</span>(<span style="color:#666">&amp;</span>self)<span style="color:#bbb"> </span>-&gt; <span style="color:#a2f">Option</span><span style="color:#666">&lt;</span>(<span style="color:#0b0;font-weight:bold">u8</span>,<span style="color:#bbb"> </span><span style="color:#0b0;font-weight:bold">u8</span>)<span style="color:#666">&gt;</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>self<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>Token::Op(s)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>s.as_str()<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span><span style="color:#b44">&#34;+&#34;</span><span style="color:#bbb"> </span><span style="color:#666">|</span><span style="color:#bbb"> </span><span style="color:#b44">&#34;-&#34;</span><span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f">Some</span>((<span style="color:#666">10</span>,<span style="color:#bbb"> </span><span style="color:#666">10</span>)),<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span><span style="color:#b44">&#34;*&#34;</span><span style="color:#bbb"> </span><span style="color:#666">|</span><span style="color:#bbb"> </span><span style="color:#b44">&#34;/&#34;</span><span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f">Some</span>((<span style="color:#666">20</span>,<span style="color:#bbb"> </span><span style="color:#666">20</span>)),<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span>_<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f">None</span>,<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>},<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>_<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f">None</span>,<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#080;font-style:italic">// parse receive an input text and transform it to Expr
+</span><span style="color:#080;font-style:italic"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">parse</span>(input: <span style="color:#a2f">&amp;</span><span style="color:#0b0;font-weight:bold">str</span>)<span style="color:#bbb"> </span>-&gt; <span style="color:#00f">Expr</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>lexer<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>Lexer::new(input);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>parse_bp(<span style="color:#666">&amp;</span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>lexer,<span style="color:#bbb"> </span><span style="color:#666">0</span>)<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">parse_bp</span>(lexer: <span style="color:#a2f">&amp;</span><span style="color:#00f">mut</span><span style="color:#bbb"> </span>Lexer,<span style="color:#bbb"> </span>rbp: <span style="color:#0b0;font-weight:bold">u8</span>)<span style="color:#bbb"> </span>-&gt; <span style="color:#00f">Expr</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>token<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>lexer.pop().expect(<span style="color:#b44">&#34;unexpected eof&#34;</span>);<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>left<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>token<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>Token::Symbol(_)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>Expr::Atom(token),<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>_<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>panic<span style="color:#666">!</span>(<span style="color:#b44">&#34;bad token: {:?}&#34;</span>,<span style="color:#bbb"> </span>token),<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span>};<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">while</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#a2f">Some</span>(token)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>lexer.peek()<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>token<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>token.clone();<span style="color:#bbb">
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>(lbp,<span style="color:#bbb"> </span>new_rbp)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>token<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>.led()<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>.unwrap_or_else(<span style="color:#666">|</span><span style="color:#666">|</span><span style="color:#bbb"> </span>panic<span style="color:#666">!</span>(<span style="color:#b44">&#34;unexpected token: {:?}&#34;</span>,<span style="color:#bbb"> </span>token));<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">if</span><span style="color:#bbb"> </span>lbp<span style="color:#bbb"> </span><span style="color:#666">&lt;</span><span style="color:#bbb"> </span>rbp<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span><span style="color:#a2f;font-weight:bold">break</span><span style="color:#bbb"></span><span style="color:#a0a000"></span>;<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>lexer.pop();<span style="color:#bbb"> </span><span style="color:#080;font-style:italic">// pop out operator
+</span><span style="color:#080;font-style:italic"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>right<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse_bp(lexer,<span style="color:#bbb"> </span>new_rbp);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>left<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>Expr::Cons(token,<span style="color:#bbb"> </span>vec<span style="color:#666">!</span>[left,<span style="color:#bbb"> </span>right])<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>left<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span></code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>13-22: 定义加和减的优先级是10，乘和除的优先级是20</li>
+<li>33-37: 每次递归调用开始，表达式的开头应该是一个数字（因为我们还没有支持前缀操作符）</li>
+<li>39: 一直循环直到Lexer中没有剩余的符号</li>
+<li>41-46: 获取当前符号的 <code>lbp</code> 和新的 <code>rbp</code>，如果当前符号的优先级更低，则返回left作为上一层的right，否则说明需要和后面的操作关联，递归调用获取 <code>right</code> ， 组合Expr，继续查看后面的token</li>
+</ul>
+<h3 id="4-通过测试">4. 通过测试</h3>
+<p>这个时候算法已经实现完了，不过Rust中的结构体，没有默认的打印方式，所以我们需要告诉它我们希望输出的格式。</p>
+<div class="highlight"><div style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#a2f;font-weight:bold">use</span><span style="color:#bbb"> </span>std::fmt;<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#080;font-style:italic">// Token is either a Symbol like &#34;1&#34;, &#34;2&#34;, or an Op like &#34;+&#34;, &#34;*&#34;
+</span><span style="color:#080;font-style:italic"></span><span style="color:#080">#[</span><span style="color:#080">derive(Debug, Clone)</span><span style="color:#080">]</span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">enum</span> <span style="color:#00f">Token</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>Symbol(<span style="color:#a2f">String</span>),<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>Op(<span style="color:#a2f">String</span>),<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">impl</span><span style="color:#bbb"> </span>fmt::Display<span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">for</span><span style="color:#bbb"> </span>Token<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">fmt</span>(<span style="color:#666">&amp;</span>self,<span style="color:#bbb"> </span>f: <span style="color:#a2f">&amp;</span><span style="color:#00f">mut</span><span style="color:#bbb"> </span>fmt::Formatter<span style="color:#666">&lt;</span><span style="color:#b44">&#39;_</span><span style="color:#666">&gt;</span>)<span style="color:#bbb"> </span>-&gt; <span style="color:#00f">fmt</span>::<span style="color:#a2f">Result</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>self<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>Token::Symbol(s)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>write<span style="color:#666">!</span>(f,<span style="color:#bbb"> </span><span style="color:#b44">&#34;{}&#34;</span>,<span style="color:#bbb"> </span>s),<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>Token::Op(op)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>write<span style="color:#666">!</span>(f,<span style="color:#bbb"> </span><span style="color:#b44">&#34;{}&#34;</span>,<span style="color:#bbb"> </span>op),<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#080;font-style:italic">// Expr is a lisp S-expression, it&#39;s either an atom or a list of atom.
+</span><span style="color:#080;font-style:italic"></span><span style="color:#a2f;font-weight:bold">enum</span> <span style="color:#00f">Expr</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>Atom(Token),<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>Cons(Token,<span style="color:#bbb"> </span><span style="color:#a2f">Vec</span><span style="color:#666">&lt;</span>Expr<span style="color:#666">&gt;</span>),<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">impl</span><span style="color:#bbb"> </span>fmt::Display<span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">for</span><span style="color:#bbb"> </span>Expr<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">fmt</span>(<span style="color:#666">&amp;</span>self,<span style="color:#bbb"> </span>f: <span style="color:#a2f">&amp;</span><span style="color:#00f">mut</span><span style="color:#bbb"> </span>fmt::Formatter<span style="color:#666">&lt;</span><span style="color:#b44">&#39;_</span><span style="color:#666">&gt;</span>)<span style="color:#bbb"> </span>-&gt; <span style="color:#00f">fmt</span>::<span style="color:#a2f">Result</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>self<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>Expr::Atom(t)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>write<span style="color:#666">!</span>(f,<span style="color:#bbb"> </span><span style="color:#b44">&#34;{}&#34;</span>,<span style="color:#bbb"> </span>t),<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>Expr::Cons(head,<span style="color:#bbb"> </span>rest)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span>write<span style="color:#666">!</span>(f,<span style="color:#bbb"> </span><span style="color:#b44">&#34;({}&#34;</span>,<span style="color:#bbb"> </span>head)<span style="color:#666">?</span>;<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span><span style="color:#a2f;font-weight:bold">for</span><span style="color:#bbb"> </span>s<span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">in</span><span style="color:#bbb"> </span>rest<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                    </span>write<span style="color:#666">!</span>(f,<span style="color:#bbb"> </span><span style="color:#b44">&#34; {}&#34;</span>,<span style="color:#bbb"> </span>s)<span style="color:#666">?</span><span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span>}<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span>write<span style="color:#666">!</span>(f,<span style="color:#bbb"> </span><span style="color:#b44">&#34;)&#34;</span>)<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>}<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#080">#[</span><span style="color:#080">test</span><span style="color:#080">]</span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">test_parse</span>()<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>s<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse(<span style="color:#b44">&#34;1 + 2 * 3&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>assert_eq<span style="color:#666">!</span>(s.to_string(),<span style="color:#bbb"> </span><span style="color:#b44">&#34;(+ 1 (* 2 3))&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>s<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse(<span style="color:#b44">&#34;1 * 2 + 3&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>assert_eq<span style="color:#666">!</span>(s.to_string(),<span style="color:#bbb"> </span><span style="color:#b44">&#34;(+ (* 1 2) 3)&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="5-支持前缀操作符">5. 支持前缀操作符</h3>
+<p>前缀操作需要有更高的优先级</p>
+<div class="highlight"><div style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust">...<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">impl</span><span style="color:#bbb"> </span>Token<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#080;font-style:italic">// nud return right binding power
+</span><span style="color:#080;font-style:italic"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">nud</span>(<span style="color:#666">&amp;</span>self)<span style="color:#bbb"> </span>-&gt; <span style="color:#a2f">Option</span><span style="color:#666">&lt;</span><span style="color:#0b0;font-weight:bold">u8</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>self<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>Token::Op(s)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>s.as_str()<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span><span style="color:#b44">&#34;+&#34;</span><span style="color:#bbb"> </span><span style="color:#666">|</span><span style="color:#bbb"> </span><span style="color:#b44">&#34;-&#34;</span><span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f">Some</span>(<span style="color:#666">30</span>),<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span>_<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f">None</span>,<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>},<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>_<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f">None</span>,<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">   
+</span><span style="color:#bbb">    </span>...<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span>...<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#080;font-style:italic">// parse receive an input text and transform it to Expr
+</span><span style="color:#080;font-style:italic"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">parse</span>(input: <span style="color:#a2f">&amp;</span><span style="color:#0b0;font-weight:bold">str</span>)<span style="color:#bbb"> </span>-&gt; <span style="color:#00f">Expr</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>lexer<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>Lexer::new(input);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>parse_bp(<span style="color:#666">&amp;</span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>lexer,<span style="color:#bbb"> </span><span style="color:#666">0</span>)<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">parse_bp</span>(lexer: <span style="color:#a2f">&amp;</span><span style="color:#00f">mut</span><span style="color:#bbb"> </span>Lexer,<span style="color:#bbb"> </span>rbp: <span style="color:#0b0;font-weight:bold">u8</span>)<span style="color:#bbb"> </span>-&gt; <span style="color:#00f">Expr</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>token<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>lexer.pop().expect(<span style="color:#b44">&#34;unexpected eof&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>left<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>token<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>Token::Symbol(_)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>Expr::Atom(token),<span style="color:#bbb">
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>Token::Op(_)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>new_rbp<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>token<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span>.nud()<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span>.unwrap_or_else(<span style="color:#666">|</span><span style="color:#666">|</span><span style="color:#bbb"> </span>panic<span style="color:#666">!</span>(<span style="color:#b44">&#34;unexpected prefix op: {:?}&#34;</span>,<span style="color:#bbb"> </span>token));<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>right<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse_bp(lexer,<span style="color:#bbb"> </span>new_rbp);<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>Expr::Cons(token,<span style="color:#bbb"> </span>vec<span style="color:#666">!</span>[right])<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">    </span>};<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">while</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#a2f">Some</span>(token)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>lexer.peek()<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>token<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>token.clone();<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>(lbp,<span style="color:#bbb"> </span>new_rbp)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>token<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">            </span>.led()<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">            </span>.unwrap_or_else(<span style="color:#666">|</span><span style="color:#666">|</span><span style="color:#bbb"> </span>panic<span style="color:#666">!</span>(<span style="color:#b44">&#34;unexpected token: {:?}&#34;</span>,<span style="color:#bbb"> </span>token));<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">if</span><span style="color:#bbb"> </span>lbp<span style="color:#bbb"> </span><span style="color:#666">&lt;</span><span style="color:#bbb"> </span>rbp<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">            </span><span style="color:#a2f;font-weight:bold">break</span><span style="color:#bbb"></span><span style="color:#a0a000"></span>;<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>lexer.pop();<span style="color:#bbb"> </span><span style="color:#080;font-style:italic">// pop out operator
+</span><span style="color:#080;font-style:italic"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>right<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse_bp(lexer,<span style="color:#bbb"> </span>new_rbp);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>left<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>Expr::Cons(token,<span style="color:#bbb"> </span>vec<span style="color:#666">!</span>[left,<span style="color:#bbb"> </span>right])<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>left<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#080">#[</span><span style="color:#080">test</span><span style="color:#080">]</span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">test_prefix</span>()<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>s<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse(<span style="color:#b44">&#34;-1 * 2 + 3&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>assert_eq<span style="color:#666">!</span>(s.to_string(),<span style="color:#bbb"> </span><span style="color:#b44">&#34;(+ (* (- 1) 2) 3)&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span></code></pre></td></tr></table>
+</div>
+</div><h3 id="6-支持括号">6. 支持括号</h3>
+<p>当出现左括号时，递归开始新的一组parse过程，出现右括号时，停止递归，返回上层处理。</p>
+<div class="highlight"><div style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+</span></span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+<pre style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-rust" data-lang="rust"><span style="color:#a2f;font-weight:bold">impl</span><span style="color:#bbb"> </span>Token<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">is_left_paren</span>(<span style="color:#666">&amp;</span>self)<span style="color:#bbb"> </span>-&gt; <span style="color:#0b0;font-weight:bold">bool</span> {<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>self<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>Self::Op(op)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>op<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#b44">&#34;(&#34;</span>,<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>_<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">false</span>,<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">is_right_paren</span>(<span style="color:#666">&amp;</span>self)<span style="color:#bbb"> </span>-&gt; <span style="color:#0b0;font-weight:bold">bool</span> {<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>self<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>Self::Op(op)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>op<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#b44">&#34;)&#34;</span>,<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>_<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">false</span>,<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>...<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#080;font-style:italic">// parse receive an input text and transform it to Expr
+</span><span style="color:#080;font-style:italic"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">parse</span>(input: <span style="color:#a2f">&amp;</span><span style="color:#0b0;font-weight:bold">str</span>)<span style="color:#bbb"> </span>-&gt; <span style="color:#00f">Expr</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>lexer<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>Lexer::new(input);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>parse_bp(<span style="color:#666">&amp;</span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>lexer,<span style="color:#bbb"> </span><span style="color:#666">0</span>)<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">parse_bp</span>(lexer: <span style="color:#a2f">&amp;</span><span style="color:#00f">mut</span><span style="color:#bbb"> </span>Lexer,<span style="color:#bbb"> </span>rbp: <span style="color:#0b0;font-weight:bold">u8</span>)<span style="color:#bbb"> </span>-&gt; <span style="color:#00f">Expr</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>token<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>lexer.pop().expect(<span style="color:#b44">&#34;unexpected eof&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">mut</span><span style="color:#bbb"> </span>left<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">match</span><span style="color:#bbb"> </span>token<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>Token::Symbol(_)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>Expr::Atom(token),<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>Token::Op(_)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#666">&gt;</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span><span style="color:#a2f;font-weight:bold">if</span><span style="color:#bbb"> </span>token.is_left_paren()<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">                </span>parse_bp(lexer,<span style="color:#bbb"> </span><span style="color:#666">0</span>);<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>}<span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">else</span><span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">                </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>new_rbp<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>token<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">                    </span>.nud()<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">                    </span>.unwrap_or_else(<span style="color:#666">|</span><span style="color:#666">|</span><span style="color:#bbb"> </span>panic<span style="color:#666">!</span>(<span style="color:#b44">&#34;unexpected prefix op: {:?}&#34;</span>,<span style="color:#bbb"> </span>token));<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">                </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>right<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse_bp(lexer,<span style="color:#bbb"> </span>new_rbp);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">                </span>Expr::Cons(token,<span style="color:#bbb"> </span>vec<span style="color:#666">!</span>[right])<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">            </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>};<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">while</span><span style="color:#bbb"> </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span><span style="color:#a2f">Some</span>(token)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>lexer.peek()<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">if</span><span style="color:#bbb"> </span>token.is_right_paren()<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span>lexer.pop();<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">            </span><span style="color:#a2f;font-weight:bold">break</span><span style="color:#bbb"></span><span style="color:#a0a000"></span>;<span style="color:#bbb">
+</span></span><span style="display:block;width:100%;background-color:#dfdfdf"><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span></span><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>token<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>token.clone();<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>(lbp,<span style="color:#bbb"> </span>new_rbp)<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>token<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">            </span>.led()<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">            </span>.unwrap_or_else(<span style="color:#666">|</span><span style="color:#666">|</span><span style="color:#bbb"> </span>panic<span style="color:#666">!</span>(<span style="color:#b44">&#34;unexpected token: {:?}&#34;</span>,<span style="color:#bbb"> </span>token));<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">if</span><span style="color:#bbb"> </span>lbp<span style="color:#bbb"> </span><span style="color:#666">&lt;</span><span style="color:#bbb"> </span>rbp<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">            </span><span style="color:#a2f;font-weight:bold">break</span><span style="color:#bbb"></span><span style="color:#a0a000"></span>;<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>lexer.pop();<span style="color:#bbb"> </span><span style="color:#080;font-style:italic">// pop out operator
+</span><span style="color:#080;font-style:italic"></span><span style="color:#bbb">        </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>right<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse_bp(lexer,<span style="color:#bbb"> </span>new_rbp);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">        </span>left<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>Expr::Cons(token,<span style="color:#bbb"> </span>vec<span style="color:#666">!</span>[left,<span style="color:#bbb"> </span>right])<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>left<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#080">#[</span><span style="color:#080">test</span><span style="color:#080">]</span><span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#a2f;font-weight:bold">fn</span> <span style="color:#00a000">test_group</span>()<span style="color:#bbb"> </span>{<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span><span style="color:#a2f;font-weight:bold">let</span><span style="color:#bbb"> </span>s<span style="color:#bbb"> </span><span style="color:#666">=</span><span style="color:#bbb"> </span>parse(<span style="color:#b44">&#34;(-1+2) * 3&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span><span style="color:#bbb">    </span>assert_eq<span style="color:#666">!</span>(s.to_string(),<span style="color:#bbb"> </span><span style="color:#b44">&#34;(* (+ (- 1) 2) 3)&#34;</span>);<span style="color:#bbb">
+</span><span style="color:#bbb"></span>}<span style="color:#bbb">
+</span></code></pre></td></tr></table>
+</div>
+</div><h2 id="总结">总结</h2>
+<p>完整的代码放在了这个<a 
+    href="https://github.com/shellfly/simple-parser/blob/main/src/parser.rs"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    repo
+</a>。相比于基于BNF语法规则的解析器，TDOP确实容易实现，也更容易理解，只需要理解简单的递归，用很简单的代码就实现一个完整的parser。</p>
+<p>Ref:</p>
+<ol>
+<li><a 
+    href="https://tdop.github.io/"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    Top Down Operator Precedence
+</a></li>
+<li><a 
+    href="http://crockford.com/javascript/tdop/tdop.html"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    Top Down Operator Precedence by Douglas Crockford
+</a></li>
+<li><a 
+    href="https://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing/"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    Top-Down operator precedence parsing
+</a></li>
+<li><a 
+    href="http://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    Pratt Parsers: Expression Parsing Made Easy
+</a></li>
+<li><a 
+    href="http://l-lang.org/blog/TDOP---Pratt-parser-in-pictures/"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    TDOP / Pratt parser in pictures
+</a></li>
+<li><a 
+    href="http://www.oilshell.org/blog/2017/03/31.html"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    Pratt Parsing Index and Updates
+</a></li>
+<li><a 
+    href="https://willspeak.me/2016/09/03/top-down-operator-precedence-parsing-in-rust.html"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    Top-down Operator Precedence Parsing in Rust
+</a></li>
+<li><a 
+    href="https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    Simple but Powerful Pratt Parsing
+</a></li>
+</ol>
+
+  </div>
+
+  
+  <div class="tags">
+    
+    <a href="https://shellfly.org/tags/parser">parser</a>
+    
+    <a href="https://shellfly.org/tags/programming-language">programming language</a>
+    
+    <a href="https://shellfly.org/tags/rust">Rust</a>
+    
+  </div>
+  
+
+   
+  <div id="comment">
+    
+    <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "shellfly" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+  </div>
+
+
+</section>
+
+    </main>
+    
+    <footer id="footer">
+    
+        <div id="social">
+
+
+    <a class="symbol" href="https://www.github.com/shellfly" target="_blank">
+        
+        <svg fill="#bbbbbb" width="28" height="28"  viewBox="0 0 72 72" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    
+    <title>Github</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Social-Icons---Rounded-Black" transform="translate(-264.000000, -939.000000)">
+            <g id="Github" transform="translate(264.000000, 939.000000)">
+                <path d="M8,72 L64,72 C68.418278,72 72,68.418278 72,64 L72,8 C72,3.581722 68.418278,-8.11624501e-16 64,0 L8,0 C3.581722,8.11624501e-16 -5.41083001e-16,3.581722 0,8 L0,64 C5.41083001e-16,68.418278 3.581722,72 8,72 Z" id="Rounded" fill="#bbbbbb"></path>
+                <path d="M35.9985,13 C22.746,13 12,23.7870921 12,37.096644 C12,47.7406712 18.876,56.7718301 28.4145,59.9584121 C29.6145,60.1797862 30.0525,59.4358488 30.0525,58.7973276 C30.0525,58.2250681 30.0315,56.7100863 30.0195,54.6996482 C23.343,56.1558981 21.9345,51.4693938 21.9345,51.4693938 C20.844,48.6864054 19.2705,47.9454799 19.2705,47.9454799 C17.091,46.4500754 19.4355,46.4801943 19.4355,46.4801943 C21.843,46.6503662 23.1105,48.9634994 23.1105,48.9634994 C25.2525,52.6455377 28.728,51.5823398 30.096,50.9649018 C30.3135,49.4077535 30.9345,48.3460615 31.62,47.7436831 C26.2905,47.1352808 20.688,45.0691228 20.688,35.8361671 C20.688,33.2052792 21.6225,31.0547881 23.1585,29.3696344 C22.911,28.7597262 22.0875,26.3110578 23.3925,22.9934585 C23.3925,22.9934585 25.4085,22.3459017 29.9925,25.4632101 C31.908,24.9285993 33.96,24.6620468 36.0015,24.6515052 C38.04,24.6620468 40.0935,24.9285993 42.0105,25.4632101 C46.5915,22.3459017 48.603,22.9934585 48.603,22.9934585 C49.9125,26.3110578 49.089,28.7597262 48.8415,29.3696344 C50.3805,31.0547881 51.309,33.2052792 51.309,35.8361671 C51.309,45.0917119 45.6975,47.1292571 40.3515,47.7256117 C41.2125,48.4695491 41.9805,49.9393525 41.9805,52.1877301 C41.9805,55.4089489 41.9505,58.0067059 41.9505,58.7973276 C41.9505,59.4418726 42.3825,60.1918338 43.6005,59.9554002 C53.13,56.7627944 60,47.7376593 60,37.096644 C60,23.7870921 49.254,13 35.9985,13" fill="#FFFFFF"></path>
+            </g>
+        </g>
+    </g>
+</svg>
+    </a>
+
+    <a class="symbol" href="https://www.twitter.com/shell0fly" target="_blank">
+        
+        <svg fill="#bbbbbb" width="28" height="28" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="438.536px" height="438.536px" viewBox="0 0 438.536 438.536" style="enable-background:new 0 0 438.536 438.536;"
+	 xml:space="preserve">
+<g>
+	<path d="M414.41,24.123C398.333,8.042,378.963,0,356.315,0H82.228C59.58,0,40.21,8.042,24.126,24.123
+		C8.045,40.207,0.003,59.576,0.003,82.225v274.084c0,22.647,8.042,42.018,24.123,58.102c16.084,16.084,35.454,24.126,58.102,24.126
+		h274.084c22.648,0,42.018-8.042,58.095-24.126c16.084-16.084,24.126-35.454,24.126-58.102V82.225
+		C438.532,59.576,430.49,40.204,414.41,24.123z M335.471,168.735c0.191,1.713,0.288,4.278,0.288,7.71
+		c0,15.989-2.334,32.025-6.995,48.104c-4.661,16.087-11.8,31.504-21.416,46.254c-9.606,14.749-21.074,27.791-34.396,39.115
+		c-13.325,11.32-29.311,20.365-47.968,27.117c-18.648,6.762-38.637,10.143-59.953,10.143c-33.116,0-63.76-8.952-91.931-26.836
+		c4.568,0.568,9.329,0.855,14.275,0.855c27.6,0,52.439-8.565,74.519-25.7c-12.941-0.185-24.506-4.179-34.688-11.991
+		c-10.185-7.803-17.273-17.699-21.271-29.691c4.947,0.76,8.658,1.137,11.132,1.137c4.187,0,9.042-0.76,14.56-2.279
+		c-13.894-2.669-25.598-9.562-35.115-20.697c-9.519-11.136-14.277-23.84-14.277-38.114v-0.571
+		c10.085,4.755,19.602,7.229,28.549,7.422c-17.321-11.613-25.981-28.265-25.981-49.963c0-10.66,2.758-20.747,8.278-30.264
+		c15.035,18.464,33.311,33.213,54.816,44.252c21.507,11.038,44.54,17.227,69.092,18.558c-0.95-3.616-1.427-8.186-1.427-13.704
+		c0-16.562,5.853-30.692,17.56-42.399c11.703-11.706,25.837-17.561,42.394-17.561c17.515,0,32.079,6.283,43.688,18.846
+		c13.134-2.474,25.892-7.33,38.26-14.56c-4.757,14.652-13.613,25.788-26.55,33.402c12.368-1.716,23.88-4.95,34.537-9.708
+		C357.458,149.793,347.462,160.166,335.471,168.735z"/>
+</g>
+</svg>
+
+    </a>
+
+
+</div>
+
+    
+
+    <p class="copyright">
+    
+        若无特别声明，本网站作品采用<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议</a>进行许可。
+    
+    </p>
+    <p class="powerby">
+        Powered by <a href="http://www.gohugo.io/">Hugo</a> Theme By <a href="https://github.com/nodejh/hugo-theme-cactus-plus">nodejh</a>
+    </p>
+</footer>
+
+  </body>
+</html>

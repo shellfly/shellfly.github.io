@@ -59,30 +59,45 @@ if (!doNotTrack) {
       
 
 <section id="single">
-    <h1 class="title">B树和数据库索引</h1>
+  <h1 class="title">B树和数据库索引</h1>
 
-    <div class="tip">
-        <span>
-          Feb 22, 2020 15:14
-        </span>
-        <span class="split">
-          ·
-        </span>
-        <span>
-          
-            1692 words
-          
-        </span>
-        <span class="split">
-          ·
-        </span>
-        <span>
-          4 minute read
-        </span>
-    </div>
+  <div class="tip">
+    <span>
+      Feb 22, 2020 15:14
+    </span>
+    <span class="split">
+      ·
+    </span>
+    <span>
+      
+      1692 words
+      
+    </span>
+    <span class="split">
+      ·
+    </span>
+    <span>
+      4 minute read
+    </span>
+  </div>
 
-    <div class="content">
-      <p>很早就知道数据库索引是用B树实现的，但其实并不理解它的工作细节，也不知道树的节点里到底存了什么。最近重读了《算法 第4版》，最后一章作为扩展有一节提到了B树的实现，看了之后理解了一点，然后又在youtube上找到了一个讲解的非常好的教程，看完准备写下这篇文章帮忙自己理解，如果你也对这个话题感兴趣，非常推荐也去看一看(链接会放在文章结尾)。</p>
+  <div class="toc">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#磁盘访问代价">磁盘访问代价</a></li>
+    <li><a href="#索引结构">索引结构</a></li>
+    <li><a href="#b树">B树</a></li>
+    <li><a href="#mysql和postgresql里面索引实现的区别">MySQL和PostgreSQL里面索引实现的区别</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+
+  <div class="content">
+    <p>很早就知道数据库索引是用B树实现的，但其实并不理解它的工作细节，也不知道树的节点里到底存了什么。最近重读了《算法 第4版》，最后一章作为扩展有一节提到了B树的实现，看了之后理解了一点，然后又在youtube上找到了一个讲解的非常好的教程，看完准备写下这篇文章帮忙自己理解，如果你也对这个话题感兴趣，非常推荐也去看一看(链接会放在文章结尾)。</p>
 <p>文章会分为四个部分</p>
 <ol>
 <li>磁盘访问的代价</li>
@@ -118,17 +133,17 @@ if (!doNotTrack) {
 <h6 id="httpsgithubcompostgrespostgresblobmastersrcbackendaccessheapreadmehot"><a href="https://github.com/postgres/postgres/blob/master/src/backend/access/heap/README.HOT">https://github.com/postgres/postgres/blob/master/src/backend/access/heap/README.HOT</a></h6>
 <h6 id="httpsengubercommysql-migration"><a href="https://eng.uber.com/mysql-migration/">https://eng.uber.com/mysql-migration/</a></h6>
 
-    </div>
+  </div>
 
+  
+  <div class="tags">
     
-        <div class="tags">
-            
-                <a href="https://shellfly.org/tags/database">database</a>
-            
-        </div>
+    <a href="https://shellfly.org/tags/database">database</a>
     
-    
-     
+  </div>
+  
+
+   
   <div id="comment">
     
     <div id="disqus_thread"></div>
@@ -155,7 +170,6 @@ if (!doNotTrack) {
 
 
 </section>
-
 
     </main>
     

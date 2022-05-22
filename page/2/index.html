@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-cn">
   <head>
-    <title>为什么Go的调度模型是GMP，而不是GM | shellfly&#39;s blog</title>
+    <title>shellfly&#39;s blog</title>
 
     <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">    
 <meta name="viewport" content="width=device-width,minimum-scale=1">
-<meta name="description" content="最喜欢Go里面的一个功能就是goroutine，它提供了一个简单但是强大的语言级别的并发机制。虽然更喜欢写Python代码，不过说到并发，g">
+<meta name="description" content="shellfly&#39;s blog about something he likes">
 <meta name="generator" content="Hugo 0.63.1" />
 
 
@@ -33,6 +33,11 @@ if (!doNotTrack) {
 
 
 
+  
+    <link href="/index.xml" rel="alternate" type="application/rss+xml" title="shellfly&#39;s blog" />
+    <link href="/index.xml" rel="feed" type="application/rss+xml" title="shellfly&#39;s blog" />
+  
+
 
 
 
@@ -40,8 +45,6 @@ if (!doNotTrack) {
 
   <body>
     <nav class="navigation">
-	
-		<a href="/"> <span class="arrow">←</span>Home</a>
 	
 	<a href="/posts">Archive</a>
 	<a href="/tags">Tags</a>
@@ -57,101 +60,65 @@ if (!doNotTrack) {
 
     <main class="main">
       
+<header class="profile">
+    
+        <img class="avatar" alt="avatar" src="/images/avatar.png" />
+    
 
-<section id="single">
-  <h1 class="title">为什么Go的调度模型是GMP，而不是GM</h1>
-
-  <div class="tip">
-    <span>
-      Mar 4, 2020 20:13
-    </span>
-    <span class="split">
-      ·
-    </span>
-    <span>
-      
-      871 words
-      
-    </span>
-    <span class="split">
-      ·
-    </span>
-    <span>
-      2 minute read
-    </span>
-  </div>
-
-  <div class="toc">
-    <nav id="TableOfContents"></nav>
-  </div>
-
-  <div class="content">
-    <p>最喜欢Go里面的一个功能就是goroutine，它提供了一个简单但是强大的语言级别的并发机制。虽然更喜欢写Python代码，不过说到并发，goroutine比Python里的yield和asyncio都好理解的多，而且性能理论上也好很多。</p>
-<p>为了管理goroutines，Go有自己的调度器。你可能已经知道Go的调度器使用G-M-P模型来调度goroutine。最近读一些关于Go的调度器怎么工作的文章时，一个问题开始浮现在脑子里面，为什么调度器需要一个P呢？为什么不直接就把goroutine（G）和系统的thread（M）做映射，那样不是更简单直接吗？</p>
-<p>继续阅读更多的文章后，我发现，在最开始Go 1.0发布的时候，调度器里确实是没有P的，就是用thread直接来调度goroutine，但是有一些性能上的问题，所以在Go 1.1的时候就引入了一种新的调度器，也就是从那时候起，调度器开始使用GMP模型。这是最开始的<a 
-    href="https://docs.google.com/document/d/1TTj4T2JO42uD5ID9e89oa0sLKhJYD0Y_kqxDv3I3XMw"
+    <h1>shellfly&#39;s blog</h1>
     
     
-     
-      target="_blank" 
-      rel="noopener"
+      <h2>翼をください</h2>
     
->
-    设计文档
-</a>.</p>
-<p>文档里提到了在没有P的时候，调度器里的4个问题</p>
-<ol>
-<li>单一全局的mutex和state</li>
-<li>goroutine在不同的thread之间传递的开销</li>
-<li>大量无用的M的内存缓存</li>
-<li>因为系统调用产生的阻塞和解除阻塞</li>
-</ol>
-<p>调度器需要用一个全局的mutex来管理和维护所有goroutine的调度状态，很难扩展。goroutine经常需要在不同的thread间传递，增加的额外的延时和开支。只有当前在运行的thread才需要内存缓存以及其他一些像堆栈的资源，被系统调用阻塞的thread其实并不需要。</p>
-<p>为了解决上面这些问题，Go运行时里引入了P（处理器），所以现在就有了M代表系统的thread，P代表执行Go代码需要的资源。P在M和G中间，它会获取下一个可执行的goroutine并且找到一个M来运行它。被系统调用阻塞的thread会释放P，这样P可以继续使用其他M或者创建一个新的M来处理其他goroutine。</p>
-<p>引入P后，调度器就有了分散的执行队列，用来执行goroutine的资源被限制在有限的P上面，因为系统调用产生的阻塞和解除阻塞也变的更高效。</p>
-<p>ref:</p>
-<p><a href="https://taohuawu.club/high-performance-implementation-of-goroutine-pool">https://taohuawu.club/high-performance-implementation-of-goroutine-pool</a></p>
-<p><a href="https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/">https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/</a></p>
-<p><a href="http://morsmachine.dk/go-scheduler">http://morsmachine.dk/go-scheduler</a></p>
-<p><a href="https://github.com/golang/go/blob/master/src/runtime/proc.go">https://github.com/golang/go/blob/master/src/runtime/proc.go</a></p>
+</header>
 
-  </div>
-
-  
-  <div class="tags">
-    
-    <a href="https://shellfly.org/tags/golang">Golang</a>
-    
-  </div>
-  
-
-   
-  <div id="comment">
-    
-    <div id="disqus_thread"></div>
-<script type="application/javascript">
-    var disqus_config = function () {
+<div id="list-page">
     
     
     
-    };
-    (function() {
-        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
-            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
-            return;
-        }
-        var d = document, s = d.createElement('script'); s.async = true;
-        s.src = '//' + "shellfly" + '.disqus.com/embed.js';
-        s.setAttribute('data-timestamp', +new Date());
-        (d.head || d.body).appendChild(s);
-    })();
-</script>
-<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-  </div>
+        
+        
+        
+        <section class="item">
+          <div>
+            <h1 class="title"><a href='/game-of-life/'></a></h1>   
+            <div class="date">Jan 1, 0001</div>
+          </div>
+
+          <div class="summary"></div>
+
+        </section>
+    
+        
+        
+        
+        <section class="item">
+          <div>
+            <h1 class="title"><a href='/tdop/'></a></h1>   
+            <div class="date">Jan 1, 0001</div>
+          </div>
+
+          <div class="summary"></div>
+
+        </section>
+    
+
+    
+        <div class="pagination">
+          
+              <span class="prev">
+                  <a href="/">
+                      <span class="arrow">←</span> Newer Posts
+                  </a>
+            </span>
+          
+          
+          
+        </div>
+    
 
 
-</section>
+</div>
 
     </main>
     

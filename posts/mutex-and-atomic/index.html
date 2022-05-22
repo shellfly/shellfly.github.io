@@ -59,30 +59,42 @@ if (!doNotTrack) {
       
 
 <section id="single">
-    <h1 class="title">互斥锁和原子操作（Mutex and Atomic）</h1>
+  <h1 class="title">互斥锁和原子操作（Mutex and Atomic）</h1>
 
-    <div class="tip">
-        <span>
-          Oct 12, 2021 11:02
-        </span>
-        <span class="split">
-          ·
-        </span>
-        <span>
-          
-            1979 words
-          
-        </span>
-        <span class="split">
-          ·
-        </span>
-        <span>
-          4 minute read
-        </span>
-    </div>
+  <div class="tip">
+    <span>
+      Oct 12, 2021 11:02
+    </span>
+    <span class="split">
+      ·
+    </span>
+    <span>
+      
+      1979 words
+      
+    </span>
+    <span class="split">
+      ·
+    </span>
+    <span>
+      4 minute read
+    </span>
+  </div>
 
-    <div class="content">
-      <h2 id="信号量的发明和问题">信号量的发明和问题</h2>
+  <div class="toc">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#信号量的发明和问题">信号量的发明和问题</a></li>
+    <li><a href="#互斥锁">互斥锁</a></li>
+    <li><a href="#互斥锁的实现">互斥锁的实现</a></li>
+    <li><a href="#原子操作">原子操作</a></li>
+    <li><a href="#更多的原子操作">更多的原子操作</a></li>
+  </ul>
+</nav>
+  </div>
+
+  <div class="content">
+    <h2 id="信号量的发明和问题">信号量的发明和问题</h2>
 <p>Edsger W. Dijkstra<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup> 在1965年左右研究并发编程的时候第一次提出了互斥（mutual exclusion）的问题，并且提出了最早的一种同步原语（synchronization primitives）：信号量（semaphore）。 Dijkstra是丹麦人，他用两个丹麦的单词首字母<code>P</code>和<code>V</code>来作为信号量的两种基本的操作, 可以把<code>P</code>理解成<code>down</code>或者<code>wait</code>, <code>V</code>表示<code>up</code>或者<code>signal</code>, 只需要在访问临界区前后使用对应的操作，就能让并发的程序安全的访问临界区：</p>
 <p><p class="markdown-image">
   <img src="/images/critical-section.png" alt="critical section"  />
@@ -155,17 +167,17 @@ unlock(mutex) {
 </ol>
 </section>
 
-    </div>
+  </div>
 
+  
+  <div class="tags">
     
-        <div class="tags">
-            
-                <a href="https://shellfly.org/tags/computer-science">computer science</a>
-            
-        </div>
+    <a href="https://shellfly.org/tags/computer-science">computer science</a>
     
-    
-     
+  </div>
+  
+
+   
   <div id="comment">
     
     <div id="disqus_thread"></div>
@@ -192,7 +204,6 @@ unlock(mutex) {
 
 
 </section>
-
 
     </main>
     

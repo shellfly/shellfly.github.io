@@ -59,30 +59,34 @@ if (!doNotTrack) {
       
 
 <section id="single">
-    <h1 class="title">非阻塞 IO (goroutine是怎样工作的)</h1>
+  <h1 class="title">非阻塞 IO (goroutine是怎样工作的)</h1>
 
-    <div class="tip">
-        <span>
-          Jul 1, 2020 21:00
-        </span>
-        <span class="split">
-          ·
-        </span>
-        <span>
-          
-            1634 words
-          
-        </span>
-        <span class="split">
-          ·
-        </span>
-        <span>
-          4 minute read
-        </span>
-    </div>
+  <div class="tip">
+    <span>
+      Jul 1, 2020 21:00
+    </span>
+    <span class="split">
+      ·
+    </span>
+    <span>
+      
+      1634 words
+      
+    </span>
+    <span class="split">
+      ·
+    </span>
+    <span>
+      4 minute read
+    </span>
+  </div>
 
-    <div class="content">
-      <p>有两种流行的编程模型来设计并发的程序，线程或者事件驱动（Event driven）。两种方式都能处理大量的并发请求，不过各有各的优缺点，使用线程就需要考虑线程同步、资源占用等问题，使用事件循环就不好利用多核的CPU。</p>
+  <div class="toc">
+    <nav id="TableOfContents"></nav>
+  </div>
+
+  <div class="content">
+    <p>有两种流行的编程模型来设计并发的程序，线程或者事件驱动（Event driven）。两种方式都能处理大量的并发请求，不过各有各的优缺点，使用线程就需要考虑线程同步、资源占用等问题，使用事件循环就不好利用多核的CPU。</p>
 <p>并发编程要处理的最频繁的操作就是I/O，对一个需要处理大量并发的程序来说，它肯定是一个I/O密集型的程序，而不是计算密集型的。而I/O的操作又分阻塞和非阻塞两种模式。</p>
 <p>Go作为一个为并发而设计的语言，通过goroutine在语言层面提供了并发编程的支持，所以<strong>Go里面的I/O到底是阻塞还是非阻塞的呢？</strong></p>
 <p>要理解这个问题，首先需要弄清楚的是阻塞和非阻塞的含义。对一个I/O操作来说，因为它依赖程序外部的状态（比如网络的情况），调用一个阻塞的I/O意味者函数可能会一直阻塞住，直到操作完成。而非阻塞会在无法完成操作时，则会立即返回一个错误码。非阻塞的一大优势是它可以和多路复用函数（epoll，kqueue）一起使用，从而达到高并发的效果。</p>
@@ -143,17 +147,17 @@ if (!doNotTrack) {
     支持新的的io_uring的讨论
 </a>。得益于新的内核技术，应该在不久的将来能看到更好的关于磁盘读写的性能提升。</p>
 
-    </div>
+  </div>
 
+  
+  <div class="tags">
     
-        <div class="tags">
-            
-                <a href="https://shellfly.org/tags/golang">Golang</a>
-            
-        </div>
+    <a href="https://shellfly.org/tags/golang">Golang</a>
     
-    
-     
+  </div>
+  
+
+   
   <div id="comment">
     
     <div id="disqus_thread"></div>
@@ -180,7 +184,6 @@ if (!doNotTrack) {
 
 
 </section>
-
 
     </main>
     

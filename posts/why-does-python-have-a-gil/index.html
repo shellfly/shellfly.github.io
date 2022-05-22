@@ -59,30 +59,34 @@ if (!doNotTrack) {
       
 
 <section id="single">
-    <h1 class="title">为什么Python有一个GIL</h1>
+  <h1 class="title">为什么Python有一个GIL</h1>
 
-    <div class="tip">
-        <span>
-          Mar 19, 2018 17:14
-        </span>
-        <span class="split">
-          ·
-        </span>
-        <span>
-          
-            954 words
-          
-        </span>
-        <span class="split">
-          ·
-        </span>
-        <span>
-          2 minute read
-        </span>
-    </div>
+  <div class="tip">
+    <span>
+      Mar 19, 2018 17:14
+    </span>
+    <span class="split">
+      ·
+    </span>
+    <span>
+      
+      954 words
+      
+    </span>
+    <span class="split">
+      ·
+    </span>
+    <span>
+      2 minute read
+    </span>
+  </div>
 
-    <div class="content">
-      <h1 id="gil">GIL</h1>
+  <div class="toc">
+    <nav id="TableOfContents"></nav>
+  </div>
+
+  <div class="content">
+    <h1 id="gil">GIL</h1>
 <p>GIL是Global Interpreter Lock的缩写，也就是全局的解释器锁。CPython用GIL来保证同一时间只有一个线程在执行Python代码。所以即使多个线程被操作系统分配到CPU不同的核里，最终的效果还是线性执行，没法利用多核的优势。这也就导致了多线程程序的执行效率大大降低。</p>
 <p>所以Python里到底为什么一定要有一个GIL呢？</p>
 <p>Python官方文档中关于GIL有一段简要的说明：</p>
@@ -100,17 +104,17 @@ if (!doNotTrack) {
 <p>PS:
 人脑和python解释器一样也有个GIL，一次只能处理一件事，通过context switch来模拟多线程运行。所以学过Python后一定要记得一件事，开车时不要看手机。</p>
 
-    </div>
+  </div>
 
+  
+  <div class="tags">
     
-        <div class="tags">
-            
-                <a href="https://shellfly.org/tags/python">Python</a>
-            
-        </div>
+    <a href="https://shellfly.org/tags/python">Python</a>
     
-    
-     
+  </div>
+  
+
+   
   <div id="comment">
     
     <div id="disqus_thread"></div>
@@ -137,7 +141,6 @@ if (!doNotTrack) {
 
 
 </section>
-
 
     </main>
     
