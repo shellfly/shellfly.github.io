@@ -10,6 +10,21 @@ googleAnalytics: "UA-28584868-1"
 # Disable comments by leaving disqusShortname empty
 disqusShortname: "shellfly"
 
+markup:
+  highlight:
+    anchorLineNos: true
+    codeFences: true
+    guessSyntax: false
+    hl_Lines: ""
+    lineAnchors: ""
+    lineNoStart: 1
+    lineNos: false
+    lineNumbersInTable: true
+    noClasses: true
+    noHl: false
+    style: emacs
+    tabWidth: 4
+
 # [menu]
 
 #   [[menu.main]]
@@ -42,8 +57,8 @@ params:
 
   # Integrate Javascript files or stylesheets by adding the url to the external assets or by
   # linking local files with their path relative to the static folder, e.g. "css/styles.css"
-  customCSS: []
-  customJS: []
+  # customCSS:
+  #   - css/syntax.css # local css in `static/css/custom.css`
 
   # The variables below are optionally too and can be used to
   # translate or customize each string of the theme.
