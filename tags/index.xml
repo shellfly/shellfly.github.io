@@ -2,86 +2,67 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on shellfly&#39;s blog</title>
-    <link>https://shellfly.org/tags/</link>
+    <link>https://shellfly.github.io/tags/</link>
     <description>Recent content in Tags on shellfly&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo</generator>
     <language>zh-cn</language>
     <lastBuildDate>Sun, 22 May 2022 11:14:45 +0800</lastBuildDate>
-    
-	<atom:link href="https://shellfly.org/tags/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <atom:link href="https://shellfly.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>parser</title>
-      <link>https://shellfly.org/tags/parser/</link>
+      <title>Parser</title>
+      <link>https://shellfly.github.io/tags/parser/</link>
       <pubDate>Sun, 22 May 2022 11:14:45 +0800</pubDate>
-      
-      <guid>https://shellfly.org/tags/parser/</guid>
+      <guid>https://shellfly.github.io/tags/parser/</guid>
       <description></description>
     </item>
-    
     <item>
-      <title>programming language</title>
-      <link>https://shellfly.org/tags/programming-language/</link>
+      <title>Programming Language</title>
+      <link>https://shellfly.github.io/tags/programming-language/</link>
       <pubDate>Sun, 22 May 2022 11:14:45 +0800</pubDate>
-      
-      <guid>https://shellfly.org/tags/programming-language/</guid>
+      <guid>https://shellfly.github.io/tags/programming-language/</guid>
       <description></description>
     </item>
-    
     <item>
       <title>Rust</title>
-      <link>https://shellfly.org/tags/rust/</link>
+      <link>https://shellfly.github.io/tags/rust/</link>
       <pubDate>Sun, 22 May 2022 11:14:45 +0800</pubDate>
-      
-      <guid>https://shellfly.org/tags/rust/</guid>
+      <guid>https://shellfly.github.io/tags/rust/</guid>
       <description></description>
     </item>
-    
     <item>
-      <title>computer science</title>
-      <link>https://shellfly.org/tags/computer-science/</link>
+      <title>Computer Science</title>
+      <link>https://shellfly.github.io/tags/computer-science/</link>
       <pubDate>Tue, 12 Oct 2021 11:02:38 +0800</pubDate>
-      
-      <guid>https://shellfly.org/tags/computer-science/</guid>
+      <guid>https://shellfly.github.io/tags/computer-science/</guid>
       <description></description>
     </item>
-    
     <item>
       <title>Golang</title>
-      <link>https://shellfly.org/tags/golang/</link>
+      <link>https://shellfly.github.io/tags/golang/</link>
       <pubDate>Wed, 01 Jul 2020 21:00:25 +0800</pubDate>
-      
-      <guid>https://shellfly.org/tags/golang/</guid>
+      <guid>https://shellfly.github.io/tags/golang/</guid>
       <description></description>
     </item>
-    
     <item>
-      <title>database</title>
-      <link>https://shellfly.org/tags/database/</link>
+      <title>Database</title>
+      <link>https://shellfly.github.io/tags/database/</link>
       <pubDate>Sat, 22 Feb 2020 15:14:45 +0800</pubDate>
-      
-      <guid>https://shellfly.org/tags/database/</guid>
+      <guid>https://shellfly.github.io/tags/database/</guid>
       <description></description>
     </item>
-    
     <item>
-      <title>algorithm</title>
-      <link>https://shellfly.org/tags/algorithm/</link>
+      <title>Algorithm</title>
+      <link>https://shellfly.github.io/tags/algorithm/</link>
       <pubDate>Sun, 09 Feb 2020 21:20:50 +0800</pubDate>
-      
-      <guid>https://shellfly.org/tags/algorithm/</guid>
+      <guid>https://shellfly.github.io/tags/algorithm/</guid>
       <description></description>
     </item>
-    
     <item>
       <title>Python</title>
-      <link>https://shellfly.org/tags/python/</link>
+      <link>https://shellfly.github.io/tags/python/</link>
       <pubDate>Mon, 19 Mar 2018 17:14:00 +0800</pubDate>
-      
-      <guid>https://shellfly.org/tags/python/</guid>
+      <guid>https://shellfly.github.io/tags/python/</guid>
       <description></description>
     </item>
-    
   </channel>
 </rss>

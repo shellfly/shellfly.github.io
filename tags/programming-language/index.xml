@@ -1,33 +1,26 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>programming language on shellfly&#39;s blog</title>
-    <link>https://shellfly.org/tags/programming-language/</link>
-    <description>Recent content in programming language on shellfly&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <title>Programming Language on shellfly&#39;s blog</title>
+    <link>https://shellfly.github.io/tags/programming-language/</link>
+    <description>Recent content in Programming Language on shellfly&#39;s blog</description>
+    <generator>Hugo</generator>
     <language>zh-cn</language>
     <lastBuildDate>Sun, 22 May 2022 11:14:45 +0800</lastBuildDate>
-    
-	<atom:link href="https://shellfly.org/tags/programming-language/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <atom:link href="https://shellfly.github.io/tags/programming-language/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>怎样写一个简单的Parser（2）</title>
-      <link>https://shellfly.org/posts/how-to-write-a-simple-parser-part2/</link>
+      <link>https://shellfly.github.io/posts/how-to-write-a-simple-parser-part2/</link>
       <pubDate>Sun, 22 May 2022 11:14:45 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/how-to-write-a-simple-parser-part2/</guid>
-      <description>介绍 在上一篇文章 中，简单介绍了一下parser的背景知识，这一次我们来手写一个简单的parser，还是用这个简单的例子开始，我们的任务是实现</description>
+      <guid>https://shellfly.github.io/posts/how-to-write-a-simple-parser-part2/</guid>
+      <description>&lt;h2 id=&#34;介绍&#34;&gt;介绍 &lt;a href=&#34;#%e4%bb%8b%e7%bb%8d&#34; class=&#34;anchor&#34;&gt;🔗&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;在&lt;a &#xA;    href=&#34;https://shellfly.org/posts/how-to-write-a-simple-parser/&#34;&#xA;    &#xA;    &#xA;     &#xA;      target=&#34;_blank&#34; &#xA;      rel=&#34;noopener&#34;&#xA;    &#xA;&gt;&#xA;    上一篇文章&#xA;&lt;/a&gt;中，简单介绍了一下parser的背景知识，这一次我们来手写一个简单的parser，还是用这个简单的例子开始，我们的任务是实现一个paser, 它可以接受输入左边的表达式，生成右边的AST。&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>怎样写一个简单的Parser（1）</title>
-      <link>https://shellfly.org/posts/how-to-write-a-simple-parser/</link>
+      <link>https://shellfly.github.io/posts/how-to-write-a-simple-parser/</link>
       <pubDate>Tue, 22 Feb 2022 15:14:45 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/how-to-write-a-simple-parser/</guid>
-      <description>介绍 作为一个程序员，多少都有听过&amp;quot;paser&amp;rdquo;、 &amp;ldquo;interpreter&amp;rdquo;、 &amp;ldquo;co</description>
+      <guid>https://shellfly.github.io/posts/how-to-write-a-simple-parser/</guid>
+      <description>&lt;h2 id=&#34;介绍&#34;&gt;介绍 &lt;a href=&#34;#%e4%bb%8b%e7%bb%8d&#34; class=&#34;anchor&#34;&gt;🔗&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;作为一个程序员，多少都有听过&amp;quot;paser&amp;quot;、 &amp;ldquo;interpreter&amp;rdquo;、 &amp;ldquo;complier&amp;quot;这些概念，虽然我们可能没有了解过一个编程语言的parser是怎么实现的，但其实日常编程中我们使用过很多种parser，像JSON的parser、YAML的parser，各个语言中都有相应的实现，它们的工作都是把文本字符串转换成某种数据结构。而计算机语言自身的parser也是一样，它的输入是程序员编写的代码，输出也是一个数据结构：“抽象语法树”（AST, Abstract Syntax Tree）。 和JSON parser的不一样的是，AST对程序员来说可能是一个相对陌生的结构，不像JSON数据一样，可以让我们直观的理解。&#xA;比如下面这个简单的表达式，经过parser处理后就可以生产一个对应的AST。&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>

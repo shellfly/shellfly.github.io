@@ -4,30 +4,19 @@
     <title>B树和数据库索引 | shellfly&#39;s blog</title>
 
     <meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">    
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 <meta name="viewport" content="width=device-width,minimum-scale=1">
-<meta name="description" content="很早就知道数据库索引是用B树实现的，但其实并不理解它的工作细节，也不知道树的节点里到底存了什么。最近重读了《算法 第4版》，最后一章作为扩展有">
-<meta name="generator" content="Hugo 0.63.1" />
+<meta name="description"
+    content="很早就知道数据库索引是用B树实现的，但其实并不理解它的工作细节，也不知道树的节点里到底存了什么。最近重读了《算法 第4版》，最后一章作为扩展有一节提到了B树的实现，看了之后理解了一点，然后又在youtube上找到了一个讲解的非常好的教程，看完准备写下这篇文章帮忙自己理解，如果你也对这个话题感兴趣，非常推荐也去看一看(链接会放在文章结尾)。">
+<meta name="generator" content="Hugo 0.138.0">
 
 
-  <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+<META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
 
 
-<link rel="stylesheet" href="/css/style.css">
-<link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/%20/css/style.css">
+<link rel="shortcut icon" href="/%20/images/favicon.ico" type="image/x-icon" />
 
- 
-    
-<script type="application/javascript">
-var doNotTrack = false;
-if (!doNotTrack) {
-	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-	ga('create', 'UA-28584868-1', 'auto');
-	
-	ga('send', 'pageview');
-}
-</script>
-<script async src='https://www.google-analytics.com/analytics.js'></script>
 
 
 
@@ -50,7 +39,7 @@ if (!doNotTrack) {
 	
 
 	
-	  <a class="button" href="https://shellfly.org/index.xml">Subscribe</a>
+	  <a class="button" href="https://shellfly.github.io/index.xml">Subscribe</a>
 	
 </nav>
 
@@ -70,7 +59,7 @@ if (!doNotTrack) {
     </span>
     <span>
       
-      1692 words
+      1705 words
       
     </span>
     <span class="split">
@@ -105,40 +94,117 @@ if (!doNotTrack) {
 <li>B树</li>
 <li>MySQL和PostgreSQL里面索引实现的区别</li>
 </ol>
-<h2 id="磁盘访问代价">磁盘访问代价</h2>
-<p>和内存相比，访问磁盘的延时要高得多。假设没有索引，数据直接存在磁盘上（通常数据库会把一张表存在一个文件里面），当我们想要访问一条或者某些记录的时候，就需要从磁盘读取整个文件，因为我们不知道具体数据的磁盘地址，你可以想象如果我们只需要更新一条记录的代价有多大。尽管现在SSD已经很普遍，它也需要0.25到1ms的延时，最快的读取速度也就500MB/s到1GB/s。</p>
+<h2 id="磁盘访问代价">磁盘访问代价 <a href="#%e7%a3%81%e7%9b%98%e8%ae%bf%e9%97%ae%e4%bb%a3%e4%bb%b7" class="anchor">🔗</a></h2><p>和内存相比，访问磁盘的延时要高得多。假设没有索引，数据直接存在磁盘上（通常数据库会把一张表存在一个文件里面），当我们想要访问一条或者某些记录的时候，就需要从磁盘读取整个文件，因为我们不知道具体数据的磁盘地址，你可以想象如果我们只需要更新一条记录的代价有多大。尽管现在SSD已经很普遍，它也需要0.25到1ms的延时，最快的读取速度也就500MB/s到1GB/s。</p>
 <p>所以我们需要一种机制来获取我们需要访问数据的地址，它可能是机械磁盘的一个扇区，或者是SSD的一个页，索引就是提供这种功能的机制。</p>
-<h2 id="索引结构">索引结构</h2>
-<p>如果你是一个开发者，你肯定已经对索引有了一个大致的概念。数据库索引就像是书的目录一样，你可以通过它知道你感兴趣的内容在哪一页。在计算机的术语里，数据也是按照一页一页存储的。</p>
+<h2 id="索引结构">索引结构 <a href="#%e7%b4%a2%e5%bc%95%e7%bb%93%e6%9e%84" class="anchor">🔗</a></h2><p>如果你是一个开发者，你肯定已经对索引有了一个大致的概念。数据库索引就像是书的目录一样，你可以通过它知道你感兴趣的内容在哪一页。在计算机的术语里，数据也是按照一页一页存储的。</p>
 <p>索引是按照树的结构构造的，从最简单的二叉搜索树开始看，二叉搜索树的每个节点最多有两个子节点，并且每个节点里的键大于或等于它的左子节点，小于它的右子节点。在理想情况下，访问任一节点需要的最大时间都是对数级别的。</p>
 <p>如果我们想要用树的结构来存储索引，有两点需要注意。第一个是树的高度，我们可以把二叉树变成多叉树，来进一步降低树的高度。第二个是树的平衡，一个M叉树，需要保证每一个节点（根节点除外）至少包含M/2个键，并且所有叶子节点都在同一层级上。</p>
-<h2 id="b树">B树</h2>
-<p>B树就是实现了上面两种特性的一种树结构。索引自己本身作为一种数据，也是需要存到磁盘上的，当然也是分成很多页。PostgreSQL使用8KB作为一页的大小，MySQL使用16KB。根据服务器磁盘配置的不同，可能需要一到两次I/O操作来读取一页的数据。为了最小化磁盘访问次数，数据库索引中树的每一个节点就是一页的大小。</p>
+<h2 id="b树">B树 <a href="#b%e6%a0%91" class="anchor">🔗</a></h2><p>B树就是实现了上面两种特性的一种树结构。索引自己本身作为一种数据，也是需要存到磁盘上的，当然也是分成很多页。PostgreSQL使用8KB作为一页的大小，MySQL使用16KB。根据服务器磁盘配置的不同，可能需要一到两次I/O操作来读取一页的数据。为了最小化磁盘访问次数，数据库索引中树的每一个节点就是一页的大小。</p>
 <p>B树还有一种变体叫做B+树。它们的不同是，B+树的内部节点不存储键值对，而只有键。这样在一页大小的限制下就能存储更多的键。所有的内部节点都会在叶子节点有一份拷贝，叶子结点里存储键值对，并且会用链表关联起来，方便遍历。</p>
 <p>MySQL和PostgreSQL都使用了这种结构，不过PostgrsSQL还是称它B树，而不是B+树，因为PostgreSQL里面的索引里的值永远是指针，而不是像InnoDB那样，会把表的数据直接存在索引（聚簇索引）里。</p>
-<h2 id="mysql和postgresql里面索引实现的区别">MySQL和PostgreSQL里面索引实现的区别</h2>
-<p>MySQL里有一种特殊的索引叫做聚簇索引（clustered index），它只用在主键上，表的内容是按照主键的值的顺序组织存在磁盘上的。其他二级索引里的键值对里的值是主键。</p>
+<h2 id="mysql和postgresql里面索引实现的区别">MySQL和PostgreSQL里面索引实现的区别 <a href="#mysql%e5%92%8cpostgresql%e9%87%8c%e9%9d%a2%e7%b4%a2%e5%bc%95%e5%ae%9e%e7%8e%b0%e7%9a%84%e5%8c%ba%e5%88%ab" class="anchor">🔗</a></h2><p>MySQL里有一种特殊的索引叫做聚簇索引（clustered index），它只用在主键上，表的内容是按照主键的值的顺序组织存在磁盘上的。其他二级索引里的键值对里的值是主键。</p>
 <p>在使用聚簇索引的情况下，用主键去访问表里的数据是非常快的，因为只有一次I/O操作。而且这种场景很常见，比如按照自增的ID排序，或者用外键join其他表的时候。</p>
 <p>缺点就是如果使用的是二级索引来访问数据，就需要遍历两次树，一次是二级索引得到主键，然后遍历聚簇索引得真正的表数据。</p>
 <p>PostgreSQL里的索引和表是完全分开的，表的数据存储在叫做heap的结构里。索引的值就是表的磁盘位置，用主键访问还是其他索引访问并没有什么区别。</p>
 <p>另外一个使用聚簇索引的好处就是，如果数据库有频繁更新的操作，为了支持MVCC，表里会同时存在很多不同版本的数据，如果没有聚簇索引，而是索引都直接指向磁盘位置，那么每次更新都需要对所有的索引进行更新或者新建新的索引。尽管PostgreSQL里面有使用HOT这种技术来避免这种情况的发生，不过它限制在新的数据也需要在同一个页里面，并且不能更新索引的列。这也是Uber从PostgreSQL切换到MySQL的主要原因。</p>
 <p>Reference</p>
-<h6 id="httpsgithubcomkevin-waynealgs4"><a href="https://github.com/kevin-wayne/algs4">https://github.com/kevin-wayne/algs4</a></h6>
-<h6 id="httpswwwyoutubecomwatchvazjyr87r1b8"><a href="https://www.youtube.com/watch?v=aZjYr87r1b8">https://www.youtube.com/watch?v=aZjYr87r1b8</a></h6>
-<h6 id="httpcodecapsulecom20140212coding-for-ssds-part-2-architecture-of-an-ssd-and-benchmarking"><a href="http://codecapsule.com/2014/02/12/coding-for-ssds-part-2-architecture-of-an-ssd-and-benchmarking/">http://codecapsule.com/2014/02/12/coding-for-ssds-part-2-architecture-of-an-ssd-and-benchmarking/</a></h6>
-<h6 id="httpsuse-the-index-lukecomsqlanatomy"><a href="https://use-the-index-luke.com/sql/anatomy">https://use-the-index-luke.com/sql/anatomy</a></h6>
-<h6 id="httpswwwpostgresqlorgdocs12storage-page-layouthtml"><a href="https://www.postgresql.org/docs/12/storage-page-layout.html">https://www.postgresql.org/docs/12/storage-page-layout.html</a></h6>
-<h6 id="httpsdevmysqlcomdocrefman80eninnodb-physical-structurehtml"><a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-physical-structure.html">https://dev.mysql.com/doc/refman/8.0/en/innodb-physical-structure.html</a></h6>
-<h6 id="httpsenwikipediaorgwikitalk3ab2b_treepostgresqls_use_of_b_trees"><a href="https://en.wikipedia.org/wiki/Talk%3AB%2B_tree#PostgreSQL's_use_of_B+_trees">https://en.wikipedia.org/wiki/Talk%3AB%2B_tree#PostgreSQL's_use_of_B+_trees</a></h6>
-<h6 id="httpsgithubcompostgrespostgresblobmastersrcbackendaccessheapreadmehot"><a href="https://github.com/postgres/postgres/blob/master/src/backend/access/heap/README.HOT">https://github.com/postgres/postgres/blob/master/src/backend/access/heap/README.HOT</a></h6>
-<h6 id="httpsengubercommysql-migration"><a href="https://eng.uber.com/mysql-migration/">https://eng.uber.com/mysql-migration/</a></h6>
-
+<h6 id="httpsgithubcomkevin-waynealgs4"><a 
+    href="https://github.com/kevin-wayne/algs4"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    https://github.com/kevin-wayne/algs4
+</a> <a href="#httpsgithubcomkevin-waynealgs4" class="anchor">🔗</a></h6><h6 id="httpswwwyoutubecomwatchvazjyr87r1b8"><a 
+    href="https://www.youtube.com/watch?v=aZjYr87r1b8"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    https://www.youtube.com/watch?v=aZjYr87r1b8
+</a> <a href="#httpswwwyoutubecomwatchvazjyr87r1b8" class="anchor">🔗</a></h6><h6 id="httpcodecapsulecom20140212coding-for-ssds-part-2-architecture-of-an-ssd-and-benchmarking"><a 
+    href="http://codecapsule.com/2014/02/12/coding-for-ssds-part-2-architecture-of-an-ssd-and-benchmarking/"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    http://codecapsule.com/2014/02/12/coding-for-ssds-part-2-architecture-of-an-ssd-and-benchmarking/
+</a> <a href="#httpcodecapsulecom20140212coding-for-ssds-part-2-architecture-of-an-ssd-and-benchmarking" class="anchor">🔗</a></h6><h6 id="httpsuse-the-index-lukecomsqlanatomy"><a 
+    href="https://use-the-index-luke.com/sql/anatomy"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    https://use-the-index-luke.com/sql/anatomy
+</a> <a href="#httpsuse-the-index-lukecomsqlanatomy" class="anchor">🔗</a></h6><h6 id="httpswwwpostgresqlorgdocs12storage-page-layouthtml"><a 
+    href="https://www.postgresql.org/docs/12/storage-page-layout.html"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    https://www.postgresql.org/docs/12/storage-page-layout.html
+</a> <a href="#httpswwwpostgresqlorgdocs12storage-page-layouthtml" class="anchor">🔗</a></h6><h6 id="httpsdevmysqlcomdocrefman80eninnodb-physical-structurehtml"><a 
+    href="https://dev.mysql.com/doc/refman/8.0/en/innodb-physical-structure.html"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    https://dev.mysql.com/doc/refman/8.0/en/innodb-physical-structure.html
+</a> <a href="#httpsdevmysqlcomdocrefman80eninnodb-physical-structurehtml" class="anchor">🔗</a></h6><h6 id="httpsenwikipediaorgwikitalk3ab2b_treepostgresqls_use_of_b_trees"><a 
+    href="https://en.wikipedia.org/wiki/Talk%3AB%2B_tree#PostgreSQL%27s_use_of_B&#43;_trees"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    https://en.wikipedia.org/wiki/Talk%3AB%2B_tree#PostgreSQL's_use_of_B+_trees
+</a> <a href="#httpsenwikipediaorgwikitalk3ab2b_treepostgresqls_use_of_b_trees" class="anchor">🔗</a></h6><h6 id="httpsgithubcompostgrespostgresblobmastersrcbackendaccessheapreadmehot"><a 
+    href="https://github.com/postgres/postgres/blob/master/src/backend/access/heap/README.HOT"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    https://github.com/postgres/postgres/blob/master/src/backend/access/heap/README.HOT
+</a> <a href="#httpsgithubcompostgrespostgresblobmastersrcbackendaccessheapreadmehot" class="anchor">🔗</a></h6><h6 id="httpsengubercommysql-migration"><a 
+    href="https://eng.uber.com/mysql-migration/"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    https://eng.uber.com/mysql-migration/
+</a> <a href="#httpsengubercommysql-migration" class="anchor">🔗</a></h6>
   </div>
 
   
   <div class="tags">
     
-    <a href="https://shellfly.org/tags/database">database</a>
+    <a href="https://shellfly.github.io/tags/database">database</a>
     
   </div>
   
@@ -147,8 +213,8 @@ if (!doNotTrack) {
   <div id="comment">
     
     <div id="disqus_thread"></div>
-<script type="application/javascript">
-    var disqus_config = function () {
+<script>
+    window.disqus_config = function () {
     
     
     
@@ -228,7 +294,17 @@ if (!doNotTrack) {
 
     <p class="copyright">
     
-        若无特别声明，本网站作品采用<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议</a>进行许可。
+        若无特别声明，本网站作品采用<a 
+    href="http://creativecommons.org/licenses/by-nc-sa/4.0/"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议
+</a>进行许可。
     
     </p>
     <p class="powerby">

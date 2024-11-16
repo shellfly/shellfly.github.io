@@ -1,24 +1,19 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>database on shellfly&#39;s blog</title>
-    <link>https://shellfly.org/tags/database/</link>
-    <description>Recent content in database on shellfly&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <title>Database on shellfly&#39;s blog</title>
+    <link>https://shellfly.github.io/tags/database/</link>
+    <description>Recent content in Database on shellfly&#39;s blog</description>
+    <generator>Hugo</generator>
     <language>zh-cn</language>
     <lastBuildDate>Sat, 22 Feb 2020 15:14:45 +0800</lastBuildDate>
-    
-	<atom:link href="https://shellfly.org/tags/database/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <atom:link href="https://shellfly.github.io/tags/database/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>B树和数据库索引</title>
-      <link>https://shellfly.org/posts/b-tree-and-database-index/</link>
+      <link>https://shellfly.github.io/posts/b-tree-and-database-index/</link>
       <pubDate>Sat, 22 Feb 2020 15:14:45 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/b-tree-and-database-index/</guid>
-      <description>很早就知道数据库索引是用B树实现的，但其实并不理解它的工作细节，也不知道树的节点里到底存了什么。最近重读了《算法 第4版》，最后一章作为扩展有</description>
+      <guid>https://shellfly.github.io/posts/b-tree-and-database-index/</guid>
+      <description>&lt;p&gt;很早就知道数据库索引是用B树实现的，但其实并不理解它的工作细节，也不知道树的节点里到底存了什么。最近重读了《算法 第4版》，最后一章作为扩展有一节提到了B树的实现，看了之后理解了一点，然后又在youtube上找到了一个讲解的非常好的教程，看完准备写下这篇文章帮忙自己理解，如果你也对这个话题感兴趣，非常推荐也去看一看(链接会放在文章结尾)。&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>

@@ -2,32 +2,25 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Golang on shellfly&#39;s blog</title>
-    <link>https://shellfly.org/tags/golang/</link>
+    <link>https://shellfly.github.io/tags/golang/</link>
     <description>Recent content in Golang on shellfly&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo</generator>
     <language>zh-cn</language>
     <lastBuildDate>Wed, 01 Jul 2020 21:00:25 +0800</lastBuildDate>
-    
-	<atom:link href="https://shellfly.org/tags/golang/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <atom:link href="https://shellfly.github.io/tags/golang/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>非阻塞 IO (goroutine是怎样工作的)</title>
-      <link>https://shellfly.org/posts/nonblocking-io/</link>
+      <link>https://shellfly.github.io/posts/nonblocking-io/</link>
       <pubDate>Wed, 01 Jul 2020 21:00:25 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/nonblocking-io/</guid>
-      <description>有两种流行的编程模型来设计并发的程序，线程或者事件驱动（Event driven）。两种方式都能处理大量的并发请求，不过各有各的优缺点，使用线</description>
+      <guid>https://shellfly.github.io/posts/nonblocking-io/</guid>
+      <description>&lt;p&gt;有两种流行的编程模型来设计并发的程序，线程或者事件驱动（Event driven）。两种方式都能处理大量的并发请求，不过各有各的优缺点，使用线程就需要考虑线程同步、资源占用等问题，使用事件循环就不好利用多核的CPU。&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>为什么Go的调度模型是GMP，而不是GM</title>
-      <link>https://shellfly.org/posts/why-go-scheduler-use-gmp/</link>
+      <link>https://shellfly.github.io/posts/why-go-scheduler-use-gmp/</link>
       <pubDate>Wed, 04 Mar 2020 20:13:27 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/why-go-scheduler-use-gmp/</guid>
-      <description>最喜欢Go里面的一个功能就是goroutine，它提供了一个简单但是强大的语言级别的并发机制。虽然更喜欢写Python代码，不过说到并发，g</description>
+      <guid>https://shellfly.github.io/posts/why-go-scheduler-use-gmp/</guid>
+      <description>&lt;p&gt;最喜欢Go里面的一个功能就是goroutine，它提供了一个简单但是强大的语言级别的并发机制。虽然更喜欢写Python代码，不过说到并发，goroutine比Python里的yield和asyncio都好理解的多，而且性能理论上也好很多。&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>

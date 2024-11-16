@@ -1,24 +1,19 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>algorithm on shellfly&#39;s blog</title>
-    <link>https://shellfly.org/tags/algorithm/</link>
-    <description>Recent content in algorithm on shellfly&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <title>Algorithm on shellfly&#39;s blog</title>
+    <link>https://shellfly.github.io/tags/algorithm/</link>
+    <description>Recent content in Algorithm on shellfly&#39;s blog</description>
+    <generator>Hugo</generator>
     <language>zh-cn</language>
     <lastBuildDate>Sun, 09 Feb 2020 21:20:50 +0800</lastBuildDate>
-    
-	<atom:link href="https://shellfly.org/tags/algorithm/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <atom:link href="https://shellfly.github.io/tags/algorithm/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>排序算法</title>
-      <link>https://shellfly.org/posts/sorting-algorithms/</link>
+      <link>https://shellfly.github.io/posts/sorting-algorithms/</link>
       <pubDate>Sun, 09 Feb 2020 21:20:50 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/sorting-algorithms/</guid>
-      <description>记得很早之前的一个同事新人，跟我开始了这样一次对话： “你知道Python里面的排序用的是什么算法吗？” “肯定是快排。“，我说。 ”不对，是叫T</description>
+      <guid>https://shellfly.github.io/posts/sorting-algorithms/</guid>
+      <description>&lt;p&gt;记得很早之前的一个同事新人，跟我开始了这样一次对话：&lt;/p&gt;&#xA;&lt;p&gt;“你知道Python里面的排序用的是什么算法吗？”&lt;/p&gt;&#xA;&lt;p&gt;“肯定是快排。“，我说。&lt;/p&gt;&#xA;&lt;p&gt;”不对，是叫Timsort，是一个叫Tim的人开发的“&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>

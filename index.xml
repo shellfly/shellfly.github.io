@@ -2,122 +2,88 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>shellfly&#39;s blog</title>
-    <link>https://shellfly.org/</link>
+    <link>https://shellfly.github.io/</link>
     <description>Recent content on shellfly&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo</generator>
     <language>zh-cn</language>
     <lastBuildDate>Sun, 22 May 2022 11:14:45 +0800</lastBuildDate>
-    
-	<atom:link href="https://shellfly.org/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <atom:link href="https://shellfly.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>怎样写一个简单的Parser（2）</title>
-      <link>https://shellfly.org/posts/how-to-write-a-simple-parser-part2/</link>
+      <link>https://shellfly.github.io/posts/how-to-write-a-simple-parser-part2/</link>
       <pubDate>Sun, 22 May 2022 11:14:45 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/how-to-write-a-simple-parser-part2/</guid>
-      <description>介绍 在上一篇文章 中，简单介绍了一下parser的背景知识，这一次我们来手写一个简单的parser，还是用这个简单的例子开始，我们的任务是实现</description>
+      <guid>https://shellfly.github.io/posts/how-to-write-a-simple-parser-part2/</guid>
+      <description>&lt;h2 id=&#34;介绍&#34;&gt;介绍 &lt;a href=&#34;#%e4%bb%8b%e7%bb%8d&#34; class=&#34;anchor&#34;&gt;🔗&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;在&lt;a &#xA;    href=&#34;https://shellfly.org/posts/how-to-write-a-simple-parser/&#34;&#xA;    &#xA;    &#xA;     &#xA;      target=&#34;_blank&#34; &#xA;      rel=&#34;noopener&#34;&#xA;    &#xA;&gt;&#xA;    上一篇文章&#xA;&lt;/a&gt;中，简单介绍了一下parser的背景知识，这一次我们来手写一个简单的parser，还是用这个简单的例子开始，我们的任务是实现一个paser, 它可以接受输入左边的表达式，生成右边的AST。&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>怎样写一个简单的Parser（1）</title>
-      <link>https://shellfly.org/posts/how-to-write-a-simple-parser/</link>
+      <link>https://shellfly.github.io/posts/how-to-write-a-simple-parser/</link>
       <pubDate>Tue, 22 Feb 2022 15:14:45 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/how-to-write-a-simple-parser/</guid>
-      <description>介绍 作为一个程序员，多少都有听过&amp;quot;paser&amp;rdquo;、 &amp;ldquo;interpreter&amp;rdquo;、 &amp;ldquo;co</description>
+      <guid>https://shellfly.github.io/posts/how-to-write-a-simple-parser/</guid>
+      <description>&lt;h2 id=&#34;介绍&#34;&gt;介绍 &lt;a href=&#34;#%e4%bb%8b%e7%bb%8d&#34; class=&#34;anchor&#34;&gt;🔗&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;作为一个程序员，多少都有听过&amp;quot;paser&amp;quot;、 &amp;ldquo;interpreter&amp;rdquo;、 &amp;ldquo;complier&amp;quot;这些概念，虽然我们可能没有了解过一个编程语言的parser是怎么实现的，但其实日常编程中我们使用过很多种parser，像JSON的parser、YAML的parser，各个语言中都有相应的实现，它们的工作都是把文本字符串转换成某种数据结构。而计算机语言自身的parser也是一样，它的输入是程序员编写的代码，输出也是一个数据结构：“抽象语法树”（AST, Abstract Syntax Tree）。 和JSON parser的不一样的是，AST对程序员来说可能是一个相对陌生的结构，不像JSON数据一样，可以让我们直观的理解。&#xA;比如下面这个简单的表达式，经过parser处理后就可以生产一个对应的AST。&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>入职字节三个月有感</title>
-      <link>https://shellfly.org/posts/three-months-after-i-joined-bytedance/</link>
+      <link>https://shellfly.github.io/posts/three-months-after-i-joined-bytedance/</link>
       <pubDate>Sat, 22 Jan 2022 21:39:08 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/three-months-after-i-joined-bytedance/</guid>
-      <description>为什么从Apple离职 从Apple离职的时候，大部分朋友都表示不理解，“别人都在选择躺平，你怎么还站起来了？”。其实在考虑换工作的时候也有犹</description>
+      <guid>https://shellfly.github.io/posts/three-months-after-i-joined-bytedance/</guid>
+      <description>&lt;h2 id=&#34;为什么从apple离职&#34;&gt;为什么从Apple离职 &lt;a href=&#34;#%e4%b8%ba%e4%bb%80%e4%b9%88%e4%bb%8eapple%e7%a6%bb%e8%81%8c&#34; class=&#34;anchor&#34;&gt;🔗&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;从Apple离职的时候，大部分朋友都表示不理解，“别人都在选择躺平，你怎么还站起来了？”。其实在考虑换工作的时候也有犹豫过，Apple的工作环境很好，自己也不是一个喜欢频繁换工作的人。毕业后的第一份工作在扇贝，待了5年，学到了很多东西，当时觉得自己到了一个瓶颈期，于是选择了裸辞，在家练了几个月的算法和英语，那时胆子很大，想试试Google，后来却机缘巧合来到了上海的Apple。&lt;/p&gt;&#xA;&lt;p&gt;Apple的工作环境和我想象中大公司的样子如出一辙，有善于管理的manager，有专业友好的同事，有考虑员工成长发展的公司氛围。第一次接触到了不同国家的同事，还有机会去了一趟Apple Park。工作时间也是955，work life balance，在Apple工作期间读完了很多大部头《红楼梦》、荷马史诗、《卡拉马佐夫兄弟》、《约翰克里斯朵夫》，甚至报了班，开始学起了钢琴。一切都很好，不过还是有一样东西让我有了离职的念头，感觉我的技术好像停滞了。&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>互斥锁和原子操作（Mutex and Atomic）</title>
-      <link>https://shellfly.org/posts/mutex-and-atomic/</link>
+      <link>https://shellfly.github.io/posts/mutex-and-atomic/</link>
       <pubDate>Tue, 12 Oct 2021 11:02:38 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/mutex-and-atomic/</guid>
-      <description>信号量的发明和问题 Edsger W. Dijkstra1 在1965年左右研究并发编程的时候第一次提出了互斥（mutual exclusion）的问题，并且提出了最早的一种同步</description>
+      <guid>https://shellfly.github.io/posts/mutex-and-atomic/</guid>
+      <description>&lt;h2 id=&#34;信号量的发明和问题&#34;&gt;信号量的发明和问题 &lt;a href=&#34;#%e4%bf%a1%e5%8f%b7%e9%87%8f%e7%9a%84%e5%8f%91%e6%98%8e%e5%92%8c%e9%97%ae%e9%a2%98&#34; class=&#34;anchor&#34;&gt;🔗&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Edsger W. Dijkstra&lt;sup id=&#34;fnref:1&#34;&gt;&lt;a href=&#34;#fn:1&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;1&lt;/a&gt;&lt;/sup&gt; 在1965年左右研究并发编程的时候第一次提出了互斥（mutual exclusion）的问题，并且提出了最早的一种同步原语（synchronization primitives）：信号量（semaphore）。 Dijkstra是丹麦人，他用两个丹麦的单词首字母&lt;code&gt;P&lt;/code&gt;和&lt;code&gt;V&lt;/code&gt;来作为信号量的两种基本的操作, 可以把&lt;code&gt;P&lt;/code&gt;理解成&lt;code&gt;down&lt;/code&gt;或者&lt;code&gt;wait&lt;/code&gt;, &lt;code&gt;V&lt;/code&gt;表示&lt;code&gt;up&lt;/code&gt;或者&lt;code&gt;signal&lt;/code&gt;, 只需要在访问临界区前后使用对应的操作，就能让并发的程序安全的访问临界区：&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>非阻塞 IO (goroutine是怎样工作的)</title>
-      <link>https://shellfly.org/posts/nonblocking-io/</link>
+      <link>https://shellfly.github.io/posts/nonblocking-io/</link>
       <pubDate>Wed, 01 Jul 2020 21:00:25 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/nonblocking-io/</guid>
-      <description>有两种流行的编程模型来设计并发的程序，线程或者事件驱动（Event driven）。两种方式都能处理大量的并发请求，不过各有各的优缺点，使用线</description>
+      <guid>https://shellfly.github.io/posts/nonblocking-io/</guid>
+      <description>&lt;p&gt;有两种流行的编程模型来设计并发的程序，线程或者事件驱动（Event driven）。两种方式都能处理大量的并发请求，不过各有各的优缺点，使用线程就需要考虑线程同步、资源占用等问题，使用事件循环就不好利用多核的CPU。&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>为什么Go的调度模型是GMP，而不是GM</title>
-      <link>https://shellfly.org/posts/why-go-scheduler-use-gmp/</link>
+      <link>https://shellfly.github.io/posts/why-go-scheduler-use-gmp/</link>
       <pubDate>Wed, 04 Mar 2020 20:13:27 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/why-go-scheduler-use-gmp/</guid>
-      <description>最喜欢Go里面的一个功能就是goroutine，它提供了一个简单但是强大的语言级别的并发机制。虽然更喜欢写Python代码，不过说到并发，g</description>
+      <guid>https://shellfly.github.io/posts/why-go-scheduler-use-gmp/</guid>
+      <description>&lt;p&gt;最喜欢Go里面的一个功能就是goroutine，它提供了一个简单但是强大的语言级别的并发机制。虽然更喜欢写Python代码，不过说到并发，goroutine比Python里的yield和asyncio都好理解的多，而且性能理论上也好很多。&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>B树和数据库索引</title>
-      <link>https://shellfly.org/posts/b-tree-and-database-index/</link>
+      <link>https://shellfly.github.io/posts/b-tree-and-database-index/</link>
       <pubDate>Sat, 22 Feb 2020 15:14:45 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/b-tree-and-database-index/</guid>
-      <description>很早就知道数据库索引是用B树实现的，但其实并不理解它的工作细节，也不知道树的节点里到底存了什么。最近重读了《算法 第4版》，最后一章作为扩展有</description>
+      <guid>https://shellfly.github.io/posts/b-tree-and-database-index/</guid>
+      <description>&lt;p&gt;很早就知道数据库索引是用B树实现的，但其实并不理解它的工作细节，也不知道树的节点里到底存了什么。最近重读了《算法 第4版》，最后一章作为扩展有一节提到了B树的实现，看了之后理解了一点，然后又在youtube上找到了一个讲解的非常好的教程，看完准备写下这篇文章帮忙自己理解，如果你也对这个话题感兴趣，非常推荐也去看一看(链接会放在文章结尾)。&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>排序算法</title>
-      <link>https://shellfly.org/posts/sorting-algorithms/</link>
+      <link>https://shellfly.github.io/posts/sorting-algorithms/</link>
       <pubDate>Sun, 09 Feb 2020 21:20:50 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/sorting-algorithms/</guid>
-      <description>记得很早之前的一个同事新人，跟我开始了这样一次对话： “你知道Python里面的排序用的是什么算法吗？” “肯定是快排。“，我说。 ”不对，是叫T</description>
+      <guid>https://shellfly.github.io/posts/sorting-algorithms/</guid>
+      <description>&lt;p&gt;记得很早之前的一个同事新人，跟我开始了这样一次对话：&lt;/p&gt;&#xA;&lt;p&gt;“你知道Python里面的排序用的是什么算法吗？”&lt;/p&gt;&#xA;&lt;p&gt;“肯定是快排。“，我说。&lt;/p&gt;&#xA;&lt;p&gt;”不对，是叫Timsort，是一个叫Tim的人开发的“&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>为什么Python有一个GIL</title>
-      <link>https://shellfly.org/posts/why-does-python-have-a-gil/</link>
+      <link>https://shellfly.github.io/posts/why-does-python-have-a-gil/</link>
       <pubDate>Mon, 19 Mar 2018 17:14:00 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/why-does-python-have-a-gil/</guid>
-      <description>GIL GIL是Global Interpreter Lock的缩写，也就是全局的解释器锁。CPython用GIL来保证同一时间只有一个线程在执行Python代码。所以即</description>
+      <guid>https://shellfly.github.io/posts/why-does-python-have-a-gil/</guid>
+      <description>&lt;h1 id=&#34;gil&#34;&gt;GIL &lt;a href=&#34;#gil&#34; class=&#34;anchor&#34;&gt;🔗&lt;/a&gt;&lt;/h1&gt;&lt;p&gt;GIL是Global Interpreter Lock的缩写，也就是全局的解释器锁。CPython用GIL来保证同一时间只有一个线程在执行Python代码。所以即使多个线程被操作系统分配到CPU不同的核里，最终的效果还是线性执行，没法利用多核的优势。这也就导致了多线程程序的执行效率大大降低。&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>2018</title>
-      <link>https://shellfly.org/posts/my-first-post/</link>
+      <link>https://shellfly.github.io/posts/my-first-post/</link>
       <pubDate>Sun, 28 Jan 2018 22:20:10 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/my-first-post/</guid>
-      <description>2018 希望从现在开始可以创造一些东西</description>
+      <guid>https://shellfly.github.io/posts/my-first-post/</guid>
+      <description>&lt;p&gt;2018 希望从现在开始可以创造一些东西&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title></title>
-      <link>https://shellfly.org/game-of-life/</link>
+      <link>https://shellfly.github.io/game-of-life/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://shellfly.org/game-of-life/</guid>
-      <description></description>
+      <guid>https://shellfly.github.io/game-of-life/</guid>
+      <description>&lt;!DOCTYPE html&gt;&#xA;&lt;html&gt;&#xA;&#xA;&lt;head&gt;&#xA;  &lt;meta charset=&#34;utf-8&#34;&gt;&#xA;  &lt;title&gt;Hello wasm-pack!&lt;/title&gt;&#xA;  &lt;style&gt;&#xA;    body {&#xA;      position: absolute;&#xA;      top: 0;&#xA;      left: 0;&#xA;      width: 100%;&#xA;      height: 100%;&#xA;      display: flex;&#xA;      flex-direction: column;&#xA;      align-items: center;&#xA;      justify-content: center;&#xA;    }&#xA;&#xA;    #fps {&#xA;      position: absolute;&#xA;      top: 0;&#xA;      left: 0;&#xA;      white-space: pre;&#xA;      font-family: monospace;&#xA;    }&#xA;  &lt;/style&gt;&#xA;&lt;/head&gt;&#xA;&#xA;&lt;body&gt;&#xA;  &lt;noscript&gt;This page contains webassembly and javascript content, please enable javascript in your browser.&lt;/noscript&gt;&#xA;&#xA;  &lt;button id=&#34;play-pause&#34;&gt;&lt;/button&gt;&#xA;  &lt;p&gt;speed:&lt;input type=&#34;range&#34; min=&#34;1&#34; max=&#34;100&#34; value=&#34;5&#34; class=&#34;slider&#34; id=&#34;range&#34;&gt;&lt;/p&gt;&#xA;  &lt;!-- &lt;p&gt;generation:&lt;span id=&#34;generation&#34;&gt;&lt;/span&gt;&lt;/p&gt; --&gt;&#xA;  &lt;div id=&#34;fps&#34;&gt;&lt;/div&gt;&#xA;  &lt;canvas id=&#34;game-of-life-canvas&#34;&gt;&lt;/canvas&gt;&#xA;  &lt;button id=&#34;random&#34;&gt;Random&lt;/button&gt;&#xA;  &lt;button id=&#34;pulsar&#34;&gt;Pulsar&lt;/button&gt;&#xA;  &lt;button id=&#34;glider&#34;&gt;Glider&lt;/button&gt;&#xA;  &lt;a href=&#34;https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life&#34;&gt;Game of Life&lt;/a&gt;&#xA;  &lt;script src=&#34;./bootstrap.js&#34;&gt;&lt;/script&gt;&#xA;&lt;/body&gt;&#xA;&#xA;&lt;/html&gt;</description>
     </item>
-    
-    <item>
-      <title></title>
-      <link>https://shellfly.org/xiu-book/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://shellfly.org/xiu-book/</guid>
-      <description></description>
-    </item>
-    
   </channel>
 </rss>

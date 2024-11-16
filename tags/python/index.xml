@@ -2,23 +2,18 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Python on shellfly&#39;s blog</title>
-    <link>https://shellfly.org/tags/python/</link>
+    <link>https://shellfly.github.io/tags/python/</link>
     <description>Recent content in Python on shellfly&#39;s blog</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo</generator>
     <language>zh-cn</language>
     <lastBuildDate>Mon, 19 Mar 2018 17:14:00 +0800</lastBuildDate>
-    
-	<atom:link href="https://shellfly.org/tags/python/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <atom:link href="https://shellfly.github.io/tags/python/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>为什么Python有一个GIL</title>
-      <link>https://shellfly.org/posts/why-does-python-have-a-gil/</link>
+      <link>https://shellfly.github.io/posts/why-does-python-have-a-gil/</link>
       <pubDate>Mon, 19 Mar 2018 17:14:00 +0800</pubDate>
-      
-      <guid>https://shellfly.org/posts/why-does-python-have-a-gil/</guid>
-      <description>GIL GIL是Global Interpreter Lock的缩写，也就是全局的解释器锁。CPython用GIL来保证同一时间只有一个线程在执行Python代码。所以即</description>
+      <guid>https://shellfly.github.io/posts/why-does-python-have-a-gil/</guid>
+      <description>&lt;h1 id=&#34;gil&#34;&gt;GIL &lt;a href=&#34;#gil&#34; class=&#34;anchor&#34;&gt;🔗&lt;/a&gt;&lt;/h1&gt;&lt;p&gt;GIL是Global Interpreter Lock的缩写，也就是全局的解释器锁。CPython用GIL来保证同一时间只有一个线程在执行Python代码。所以即使多个线程被操作系统分配到CPU不同的核里，最终的效果还是线性执行，没法利用多核的优势。这也就导致了多线程程序的执行效率大大降低。&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>

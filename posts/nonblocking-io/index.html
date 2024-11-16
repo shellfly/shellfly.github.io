@@ -4,30 +4,19 @@
     <title>非阻塞 IO (goroutine是怎样工作的) | shellfly&#39;s blog</title>
 
     <meta charset="utf-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">    
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 <meta name="viewport" content="width=device-width,minimum-scale=1">
-<meta name="description" content="有两种流行的编程模型来设计并发的程序，线程或者事件驱动（Event driven）。两种方式都能处理大量的并发请求，不过各有各的优缺点，使用线">
-<meta name="generator" content="Hugo 0.63.1" />
+<meta name="description"
+    content="有两种流行的编程模型来设计并发的程序，线程或者事件驱动（Event driven）。两种方式都能处理大量的并发请求，不过各有各的优缺点，使用线程就需要考虑线程同步、资源占用等问题，使用事件循环就不好利用多核的CPU。">
+<meta name="generator" content="Hugo 0.138.0">
 
 
-  <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+<META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
 
 
-<link rel="stylesheet" href="/css/style.css">
-<link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
+<link rel="stylesheet" href="/%20/css/style.css">
+<link rel="shortcut icon" href="/%20/images/favicon.ico" type="image/x-icon" />
 
- 
-    
-<script type="application/javascript">
-var doNotTrack = false;
-if (!doNotTrack) {
-	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-	ga('create', 'UA-28584868-1', 'auto');
-	
-	ga('send', 'pageview');
-}
-</script>
-<script async src='https://www.google-analytics.com/analytics.js'></script>
 
 
 
@@ -50,7 +39,7 @@ if (!doNotTrack) {
 	
 
 	
-	  <a class="button" href="https://shellfly.org/index.xml">Subscribe</a>
+	  <a class="button" href="https://shellfly.github.io/index.xml">Subscribe</a>
 	
 </nav>
 
@@ -70,7 +59,7 @@ if (!doNotTrack) {
     </span>
     <span>
       
-      1634 words
+      1619 words
       
     </span>
     <span class="split">
@@ -152,7 +141,7 @@ if (!doNotTrack) {
   
   <div class="tags">
     
-    <a href="https://shellfly.org/tags/golang">Golang</a>
+    <a href="https://shellfly.github.io/tags/golang">Golang</a>
     
   </div>
   
@@ -161,8 +150,8 @@ if (!doNotTrack) {
   <div id="comment">
     
     <div id="disqus_thread"></div>
-<script type="application/javascript">
-    var disqus_config = function () {
+<script>
+    window.disqus_config = function () {
     
     
     
@@ -242,7 +231,17 @@ if (!doNotTrack) {
 
     <p class="copyright">
     
-        若无特别声明，本网站作品采用<a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议</a>进行许可。
+        若无特别声明，本网站作品采用<a 
+    href="http://creativecommons.org/licenses/by-nc-sa/4.0/"
+    
+    
+     
+      target="_blank" 
+      rel="noopener"
+    
+>
+    知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议
+</a>进行许可。
     
     </p>
     <p class="powerby">
