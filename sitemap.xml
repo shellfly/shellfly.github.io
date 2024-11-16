@@ -1,129 +1,74 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  
   <url>
-    <loc>https://shellfly.org/tags/parser/</loc>
+    <loc>https://shellfly.github.io/posts/</loc>
+    <lastmod>2023-01-26T16:14:45+08:00</lastmod>
+  </url><url>
+    <loc>https://shellfly.github.io/</loc>
+    <lastmod>2023-01-26T16:14:45+08:00</lastmod>
+  </url><url>
+    <loc>https://shellfly.github.io/tags/parser/</loc>
     <lastmod>2022-05-22T11:14:45+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/tags/programming-language/</loc>
     <lastmod>2022-05-22T11:14:45+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/tags/programming-language/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/tags/rust/</loc>
     <lastmod>2022-05-22T11:14:45+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/tags/rust/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/tags/</loc>
     <lastmod>2022-05-22T11:14:45+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/posts/how-to-write-a-simple-parser-part2/</loc>
     <lastmod>2022-05-22T11:14:45+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/tags/</loc>
-    <lastmod>2022-05-22T11:14:45+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/how-to-write-a-simple-parser-part2/</loc>
-    <lastmod>2022-05-22T11:14:45+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/how-to-write-a-simple-parser/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/posts/how-to-write-a-simple-parser/</loc>
     <lastmod>2022-02-22T15:14:45+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/three-months-after-i-joined-bytedance/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/posts/three-months-after-i-joined-bytedance/</loc>
     <lastmod>2022-01-22T21:39:08+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/tags/computer-science/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/tags/computer-science/</loc>
     <lastmod>2021-10-12T11:02:38+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/mutex-and-atomic/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/posts/mutex-and-atomic/</loc>
     <lastmod>2021-10-12T11:02:38+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/tags/golang/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/tags/golang/</loc>
     <lastmod>2020-07-01T21:00:25+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/nonblocking-io/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/posts/nonblocking-io/</loc>
     <lastmod>2020-07-01T21:00:25+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/why-go-scheduler-use-gmp/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/posts/why-go-scheduler-use-gmp/</loc>
     <lastmod>2020-03-04T20:13:27+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/b-tree-and-database-index/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/posts/b-tree-and-database-index/</loc>
     <lastmod>2020-02-22T15:14:45+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/tags/database/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/tags/database/</loc>
     <lastmod>2020-02-22T15:14:45+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/tags/algorithm/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/tags/algorithm/</loc>
     <lastmod>2020-02-09T21:20:50+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/sorting-algorithms/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/posts/sorting-algorithms/</loc>
     <lastmod>2020-02-09T21:20:50+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/tags/python/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/tags/python/</loc>
     <lastmod>2018-03-19T17:14:00+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/why-does-python-have-a-gil/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/posts/why-does-python-have-a-gil/</loc>
     <lastmod>2018-03-19T17:14:00+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/posts/my-first-post/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/posts/my-first-post/</loc>
     <lastmod>2018-01-28T22:20:10+08:00</lastmod>
+  </url><url>
+    <loc>https://shellfly.github.io/about/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/game-of-life/</loc>
+  </url><url>
+    <loc>https://shellfly.github.io/categories/</loc>
   </url>
-  
-  <url>
-    <loc>https://shellfly.org/about/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/game-of-life/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/xiu-book/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://shellfly.org/categories/</loc>
-  </url>
-  
 </urlset>
