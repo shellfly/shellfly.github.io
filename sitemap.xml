@@ -118,6 +118,11 @@
   </url>
   
   <url>
+    <loc>https://shellfly.org/xiu-book/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://shellfly.org/categories/</loc>
   </url>
   
